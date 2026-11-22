@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 - Hand Font</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="topbar">
+        <a href="/" class="brand">Hand Font</a>
+        <nav class="nav-links">
+            <a href="/login">로그인</a>
+            <a href="/register">회원가입</a>
+        </nav>
+    </header>
+
+    <main class="container narrow">
+        <section class="card">
+            <h1>로그인</h1>
+            <form id="login-form" class="form-stack">
+                <label>
+                    아이디
+                    <input type="text" id="username" required autocomplete="username">
+                </label>
+                <label>
+                    비밀번호
+                    <input type="password" id="password" required autocomplete="current-password">
+                </label>
+                <button type="submit" class="btn btn-primary">로그인</button>
+            </form>
+            <p id="auth-message" class="message"></p>
+            <p class="sub-link">계정이 없나요? <a href="/register">회원가입</a></p>
+        </section>
+    </main>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

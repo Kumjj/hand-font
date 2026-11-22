@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 노트 - Hand Font</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="topbar">
+        <a href="/" class="brand">Hand Font</a>
+        <nav class="nav-links">
+            <span class="user-badge">{{ user.username }}</span>
+            <a href="/notes">내 노트</a>
+            <button type="button" id="logout-btn" class="btn btn-secondary">로그아웃</button>
+        </nav>
+    </header>
+
+    <main class="container" data-page="notes">
+        <section class="card">
+            <h2>새 노트 만들기</h2>
+            <form id="create-note-form" class="inline-form">
+                <input type="text" id="new-note-title" placeholder="노트 제목" required>
+                <input type="text" id="new-note-subject" placeholder="과목 (선택)">
+                <button type="submit" class="btn btn-primary">새 노트 생성</button>
+            </form>
+            <p id="notes-message" class="message"></p>
+        </section>
+
+        <section class="card">
+            <h2>저장된 노트 목록</h2>
+            <div id="notes-list" class="item-list"></div>
+        </section>
+
+        <section class="card">
+            <h2>사용자 정의 템플릿 목록</h2>
+            <div id="templates-list" class="item-list"></div>
+        </section>
+    </main>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

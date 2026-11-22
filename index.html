@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Font</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f5f7fa;
+            color: #1f2937;
+            line-height: 1.5;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .brand {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #111827;
+            cursor: pointer;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .user-badge {
+            font-size: 0.9rem;
+            background-color: #eef2ff;
+            color: #3730a3;
+            padding: 4px 10px;
+            border-radius: 999px;
+        }
+        .container {
+            max-width: 860px;
+            margin: 28px auto;
+            padding: 0 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .container.narrow {
+            max-width: 440px;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 22px;
+        }
+        .card h1, .card h2 {
+            margin-top: 0;
+        }
+        .form-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .form-stack label {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-weight: 500;
+        }
+        .inline-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .inline-form input, .inline-form select {
+            flex: 1;
+            min-width: 160px;
+        }
+        .template-load-row {
+            margin-top: 12px;
+        }
+        input, select, textarea {
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        textarea {
+            font-family: Consolas, Monaco, monospace;
+            resize: vertical;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 9px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #111827;
+        }
+        .btn-danger {
+            background-color: #dc2626;
+            color: #ffffff;
+        }
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: #f9fafb;
+        }
+        .item-meta {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .message {
+            min-height: 20px;
+            font-size: 0.9rem;
+            color: #2563eb;
+        }
+        .message.error {
+            color: #dc2626;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <span class="brand" id="nav-home">Hand Font</span>
+        <nav class="nav-links" id="nav-links"></nav>
+    </header>
+
+    <main class="container" id="view-home">
+        <section class="card">
+            <h1>Hand Font</h1>
+            <p>AI 기반 필기 보정 및 블록 기반 디지털 노트 아카이빙 프로토타입</p>
+            <div class="actions" id="home-actions"></div>
+        </section>
+        <section class="card">
+            <h2>지원 기능</h2>
+            <ul>
+                <li>회원가입 / 로그인 / 로그아웃 및 브라우저 세션 유지</li>
+                <li>사용자별 블록 기반 노트(JSON) 생성, 조회, 수정, 삭제</li>
+                <li>사용자 정의 필기 템플릿 저장, 불러오기, 이름 수정, 삭제</li>
+            </ul>
+        </section>
+    </main>
+
+    <main class="container narrow hidden" id="view-login">
+        <section class="card">
+            <h1>로그인</h1>
+            <form id="login-form" class="form-stack">
+                <label>아이디 <input type="text" id="login-username" required></label>
+                <label>비밀번호 <input type="password" id="login-password" required></label>
+                <button type="submit" class="btn btn-primary">로그인</button>
+            </form>
+            <p id="login-msg" class="message"></p>
+            <p>계정이 없나요? <button type="button" class="btn btn-secondary" id="go-register-btn">회원가입</button></p>
+        </section>
+    </main>
+
+    <main class="container narrow hidden" id="view-register">
+        <section class="card">
+            <h1>회원가입</h1>
+            <form id="register-form" class="form-stack">
+                <label>아이디 <input type="text" id="register-username" required></label>
+                <label>비밀번호 <input type="password" id="register-password" required></label>
+                <button type="submit" class="btn btn-primary">회원가입</button>
+            </form>
+            <p id="register-msg" class="message"></p>
+            <p>이미 계정이 있나요? <button type="button" class="btn btn-secondary" id="go-login-btn">로그인</button></p>
+        </section>
+    </main>
+
+    <main class="container hidden" id="view-notes">
+        <section class="card">
+            <h2>새 노트 만들기</h2>
+            <form id="create-note-form" class="inline-form">
+                <input type="text" id="new-note-title" placeholder="노트 제목" required>
+                <input type="text" id="new-note-subject" placeholder="과목 (선택)">
+                <button type="submit" class="btn btn-primary">새 노트 생성</button>
+            </form>
+            <p id="notes-msg" class="message"></p>
+        </section>
+        <section class="card">
+            <h2>저장된 노트 목록</h2>
+            <div id="notes-list" class="item-list"></div>
+        </section>
+        <section class="card">
+            <h2>사용자 정의 템플릿 목록</h2>
+            <div id="templates-list" class="item-list"></div>
+        </section>
+    </main>
+
+    <main class="container hidden" id="view-editor">
+        <section class="card">
+            <div class="editor-header">
+                <h1>노트 편집</h1>
+                <button type="button" id="back-notes-btn" class="btn btn-secondary">목록으로</button>
+            </div>
+            <div class="form-stack">
+                <div class="inline-form">
+                    <input type="text" id="editor-title" placeholder="노트 제목">
+                    <input type="text" id="editor-subject" placeholder="과목">
+                </div>
+                <label>
+                    블록 데이터 (JSON)
+                    <textarea id="editor-json" rows="16"></textarea>
+                </label>
+                <div class="actions">
+                    <button type="button" id="save-note-btn" class="btn btn-primary">노트 저장</button>
+                    <button type="button" id="insert-sample-btn" class="btn btn-secondary">예시 블록 채우기</button>
+                </div>
+                <p id="editor-msg" class="message"></p>
+            </div>
+        </section>
+        <section class="card">
+            <h2>블록 미리보기</h2>
+            <div id="blocks-preview" class="item-list"></div>
+        </section>
+        <section class="card">
+            <h2>사용자 정의 템플릿</h2>
+            <div class="inline-form">
+                <input type="text" id="template-name-input" placeholder="저장할 템플릿 이름">
+                <button type="button" id="save-template-btn" class="btn btn-primary">현재 블록을 템플릿으로 저장</button>
+            </div>
+            <div class="inline-form template-load-row">
+                <select id="template-select">
+                    <option value="">불러올 템플릿 선택</option>
+                </select>
+                <button type="button" id="load-template-btn" class="btn btn-secondary">템플릿 불러오기</button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const STORAGE_USERS = "hf_users";
+        const STORAGE_NOTES = "hf_notes";
+        const STORAGE_TEMPLATES = "hf_templates";
+        const STORAGE_SESSION = "hf_session";
+
+        let currentNoteId = null;
+
+        function readStore(key, fallback) {
+            try {
+                const raw = localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : fallback;
+            } catch {
+                return fallback;
+            }
+        }
+
+        function writeStore(key, value) {
+            localStorage.setItem(key, JSON.stringify(value));
+        }
+
+        function simpleHash(str) {
+            let h1 = 0xdeadbeef;
+            let h2 = 0x41c6ce57;
+            for (let i = 0; i < str.length; i++) {
+                const ch = str.charCodeAt(i);
+                h1 = Math.imul(h1 ^ ch, 2654435761);
+                h2 = Math.imul(h2 ^ ch, 1597334677);
+            }
+            h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+            h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+            return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+        }
+
+        function getCurrentUser() {
+            return readStore(STORAGE_SESSION, null);
+        }
+
+        function setMsg(id, text, isError = false) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = text;
+            el.className = isError ? "message error" : "message";
+        }
+
+        function nowString() {
+            const d = new Date();
+            const pad = (n) => String(n).padStart(2, "0");
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
+
+        function showView(viewId) {
+            ["view-home", "view-login", "view-register", "view-notes", "view-editor"].forEach((id) => {
+                document.getElementById(id).classList.toggle("hidden", id !== viewId);
+            });
+            renderNav();
+        }
+
+        function renderNav() {
+            const user = getCurrentUser();
+            const nav = document.getElementById("nav-links");
+            const homeActions = document.getElementById("home-actions");
+            nav.innerHTML = "";
+            homeActions.innerHTML = "";
+            if (user) {
+                nav.innerHTML = `<span class="user-badge">${user.username}</span><button type="button" class="btn btn-secondary" id="nav-notes-btn">내 노트</button><button type="button" class="btn btn-secondary" id="nav-logout-btn">로그아웃</button>`;
+                homeActions.innerHTML = `<button type="button" class="btn btn-primary" id="home-notes-btn">내 노트 목록으로 이동</button>`;
+                document.getElementById("nav-notes-btn").onclick = openNotesView;
+                document.getElementById("home-notes-btn").onclick = openNotesView;
+                document.getElementById("nav-logout-btn").onclick = () => {
+                    localStorage.removeItem(STORAGE_SESSION);
+                    showView("view-login");
+                };
+            } else {
+                nav.innerHTML = `<button type="button" class="btn btn-secondary" id="nav-login-btn">로그인</button><button type="button" class="btn btn-primary" id="nav-register-btn">회원가입</button>`;
+                homeActions.innerHTML = `<button type="button" class="btn btn-primary" id="home-login-btn">로그인</button><button type="button" class="btn btn-secondary" id="home-register-btn">회원가입</button>`;
+                document.getElementById("nav-login-btn").onclick = () => showView("view-login");
+                document.getElementById("home-login-btn").onclick = () => showView("view-login");
+                document.getElementById("nav-register-btn").onclick = () => showView("view-register");
+                document.getElementById("home-register-btn").onclick = () => showView("view-register");
+            }
+        }
+
+        function openNotesView() {
+            const user = getCurrentUser();
+            if (!user) {
+                showView("view-login");
+                return;
+            }
+            showView("view-notes");
+            renderNotesList();
+            renderTemplatesList();
+        }
+
+        function renderNotesList() {
+            const user = getCurrentUser();
+            const notes = readStore(STORAGE_NOTES, []).filter((n) => n.user_id === user.id);
+            const listEl = document.getElementById("notes-list");
+            listEl.innerHTML = "";
+            if (notes.length === 0) {
+                listEl.innerHTML = "<p class='item-meta'>저장된 노트가 없습니다.</p>";
+                return;
+            }
+            notes.forEach((note) => {
+                const row = document.createElement("div");
+                row.className = "item-row";
+                row.innerHTML = `
+                    <div>
+                        <strong>${note.title}</strong>
+                        <div class="item-meta">과목: ${note.subject || "-"} | 수정: ${note.updated_at}</div>
+                    </div>
+                    <div class="actions">
+                        <button type="button" class="btn btn-primary" data-open="${note.id}">열기</button>
+                        <button type="button" class="btn btn-danger" data-del="${note.id}">삭제</button>
+                    </div>
+                `;
+                row.querySelector("[data-open]").onclick = () => openEditor(note.id);
+                row.querySelector("[data-del]").onclick = () => {
+                    const updated = readStore(STORAGE_NOTES, []).filter((n) => !(n.id === note.id && n.user_id === user.id));
+                    writeStore(STORAGE_NOTES, updated);
+                    setMsg("notes-msg", "노트가 삭제되었습니다.");
+                    renderNotesList();
+                };
+                listEl.appendChild(row);
+            });
+        }
+
+        function renderTemplatesList() {
+            const user = getCurrentUser();
+            const templates = readStore(STORAGE_TEMPLATES, []).filter((t) => t.user_id === user.id);
+            const listEl = document.getElementById("templates-list");
+            listEl.innerHTML = "";
+            if (templates.length === 0) {
+                listEl.innerHTML = "<p class='item-meta'>저장된 템플릿이 없습니다.</p>";
+                return;
+            }
+            templates.forEach((tpl) => {
+                const row = document.createElement("div");
+                row.className = "item-row";
+                row.innerHTML = `
+                    <div>
+                        <strong>${tpl.name}</strong>
+                        <div class="item-meta">ID: ${tpl.id}</div>
+                    </div>
+                    <div class="actions">
+                        <button type="button" class="btn btn-secondary" data-rename="${tpl.id}">이름 수정</button>
+                        <button type="button" class="btn btn-danger" data-del="${tpl.id}">삭제</button>
+                    </div>
+                `;
+                row.querySelector("[data-rename]").onclick = () => {
+                    const nextName = prompt("새 템플릿 이름을 입력하세요:", tpl.name);
+                    if (!nextName || !nextName.trim()) return;
+                    const all = readStore(STORAGE_TEMPLATES, []).map((t) =>
+                        t.id === tpl.id && t.user_id === user.id ? { ...t, name: nextName.trim() } : t
+                    );
+                    writeStore(STORAGE_TEMPLATES, all);
+                    setMsg("notes-msg", "템플릿 이름이 수정되었습니다.");
+                    renderTemplatesList();
+                };
+                row.querySelector("[data-del]").onclick = () => {
+                    const updated = readStore(STORAGE_TEMPLATES, []).filter((t) => !(t.id === tpl.id && t.user_id === user.id));
+                    writeStore(STORAGE_TEMPLATES, updated);
+                    setMsg("notes-msg", "템플릿이 삭제되었습니다.");
+                    renderTemplatesList();
+                };
+                listEl.appendChild(row);
+            });
+        }
+
+        function openEditor(noteId) {
+            const user = getCurrentUser();
+            if (!user) {
+                showView("view-login");
+                return;
+            }
+            const note = readStore(STORAGE_NOTES, []).find((n) => n.id === noteId && n.user_id === user.id);
+            if (!note) {
+                setMsg("notes-msg", "노트를 찾을 수 없습니다.", true);
+                return;
+            }
+            currentNoteId = noteId;
+            document.getElementById("editor-title").value = note.title;
+            document.getElementById("editor-subject").value = note.subject || "";
+            document.getElementById("editor-json").value = JSON.stringify(note.content, null, 2);
+            setMsg("editor-msg", "");
+            renderBlocksPreview();
+            loadTemplateOptions();
+            showView("view-editor");
+        }
+
+        function renderBlocksPreview() {
+            const previewEl = document.getElementById("blocks-preview");
+            previewEl.innerHTML = "";
+            try {
+                const parsed = JSON.parse(document.getElementById("editor-json").value);
+                const blocks = Array.isArray(parsed.blocks) ? parsed.blocks : [];
+                if (blocks.length === 0) {
+                    previewEl.innerHTML = "<p class='item-meta'>블록이 없습니다.</p>";
+                    return;
+                }
+                blocks.forEach((b) => {
+                    const row = document.createElement("div");
+                    row.className = "item-row";
+                    row.innerHTML = `
+                        <div>
+                            <strong>[${b.type || "text"}] ${b.id || ""}</strong>
+                            <div>${b.content || ""}</div>
+                            <div class="item-meta">x: ${b.x ?? 0}, y: ${b.y ?? 0}, w: ${b.width ?? 0}, h: ${b.height ?? 0}, z: ${b.zIndex ?? 1}</div>
+                        </div>
+                    `;
+                    previewEl.appendChild(row);
+                });
+            } catch {
+                previewEl.innerHTML = "<p class='message error'>JSON 형식이 올바르지 않습니다.</p>";
+            }
+        }
+
+        function loadTemplateOptions() {
+            const user = getCurrentUser();
+            const select = document.getElementById("template-select");
+            select.innerHTML = "<option value=''>불러올 템플릿 선택</option>";
+            readStore(STORAGE_TEMPLATES, [])
+                .filter((t) => t.user_id === user.id)
+                .forEach((tpl) => {
+                    const opt = document.createElement("option");
+                    opt.value = tpl.id;
+                    opt.textContent = tpl.name;
+                    select.appendChild(opt);
+                });
+        }
+
+        document.getElementById("nav-home").onclick = () => showView("view-home");
+        document.getElementById("go-register-btn").onclick = () => showView("view-register");
+        document.getElementById("go-login-btn").onclick = () => showView("view-login");
+        document.getElementById("back-notes-btn").onclick = openNotesView;
+        document.getElementById("editor-json").addEventListener("input", renderBlocksPreview);
+
+        document.getElementById("register-form").onsubmit = (e) => {
+            e.preventDefault();
+            const username = document.getElementById("register-username").value.trim();
+            const password = document.getElementById("register-password").value;
+            if (username.length < 2 || password.length < 4) {
+                setMsg("register-msg", "아이디는 2자 이상, 비밀번호는 4자 이상이어야 합니다.", true);
+                return;
+            }
+            const users = readStore(STORAGE_USERS, []);
+            if (users.some((u) => u.username === username)) {
+                setMsg("register-msg", "이미 존재하는 아이디입니다.", true);
+                return;
+            }
+            users.push({ id: Date.now(), username, password_hash: simpleHash(password) });
+            writeStore(STORAGE_USERS, users);
+            setMsg("register-msg", "회원가입이 완료되었습니다. 로그인 화면으로 이동합니다.");
+            setTimeout(() => showView("view-login"), 500);
+        };
+
+        document.getElementById("login-form").onsubmit = (e) => {
+            e.preventDefault();
+            const username = document.getElementById("login-username").value.trim();
+            const password = document.getElementById("login-password").value;
+            const user = readStore(STORAGE_USERS, []).find(
+                (u) => u.username === username && u.password_hash === simpleHash(password)
+            );
+            if (!user) {
+                setMsg("login-msg", "아이디 또는 비밀번호가 올바르지 않습니다.", true);
+                return;
+            }
+            writeStore(STORAGE_SESSION, { id: user.id, username: user.username });
+            setMsg("login-msg", "");
+            openNotesView();
+        };
+
+        document.getElementById("create-note-form").onsubmit = (e) => {
+            e.preventDefault();
+            const user = getCurrentUser();
+            const title = document.getElementById("new-note-title").value.trim() || "새 노트";
+            const subject = document.getElementById("new-note-subject").value.trim();
+            const note = {
+                id: Date.now(),
+                user_id: user.id,
+                title,
+                subject,
+                content: {
+                    title,
+                    subject,
+                    page: { width: 210, height: 297, unit: "mm" },
+                    blocks: [],
+                },
+                updated_at: nowString(),
+            };
+            const notes = readStore(STORAGE_NOTES, []);
+            notes.unshift(note);
+            writeStore(STORAGE_NOTES, notes);
+            document.getElementById("new-note-title").value = "";
+            document.getElementById("new-note-subject").value = "";
+            openEditor(note.id);
+        };
+
+        document.getElementById("insert-sample-btn").onclick = () => {
+            const sample = {
+                title: document.getElementById("editor-title").value.trim() || "수학 필기",
+                subject: document.getElementById("editor-subject").value.trim() || "수학",
+                page: { width: 210, height: 297, unit: "mm" },
+                blocks: [
+                    { id: "block_1", type: "text", content: "이차방정식의 근의 공식", x: 0.1, y: 0.2, width: 0.6, height: 0.08, zIndex: 1 },
+                    { id: "block_2", type: "math", content: "x^2+2x+1=0", x: 0.1, y: 0.3, width: 0.5, height: 0.1, zIndex: 2 },
+                ],
+            };
+            document.getElementById("editor-json").value = JSON.stringify(sample, null, 2);
+            renderBlocksPreview();
+        };
+
+        document.getElementById("save-note-btn").onclick = () => {
+            const user = getCurrentUser();
+            try {
+                const parsed = JSON.parse(document.getElementById("editor-json").value);
+                const title = document.getElementById("editor-title").value.trim() || "새 노트";
+                const subject = document.getElementById("editor-subject").value.trim();
+                const updatedAt = nowString();
+                const notes = readStore(STORAGE_NOTES, []).map((n) =>
+                    n.id === currentNoteId && n.user_id === user.id
+                        ? { ...n, title, subject, content: parsed, updated_at: updatedAt }
+                        : n
+                );
+                writeStore(STORAGE_NOTES, notes);
+                setMsg("editor-msg", `노트가 저장되었습니다. (${updatedAt})`);
+            } catch {
+                setMsg("editor-msg", "유효한 JSON 형식이 아닙니다.", true);
+            }
+        };
+
+        document.getElementById("save-template-btn").onclick = () => {
+            const user = getCurrentUser();
+            const name = document.getElementById("template-name-input").value.trim();
+            if (!name) {
+                setMsg("editor-msg", "템플릿 이름을 입력해주세요.", true);
+                return;
+            }
+            try {
+                const parsed = JSON.parse(document.getElementById("editor-json").value);
+                const templates = readStore(STORAGE_TEMPLATES, []);
+                templates.unshift({ id: Date.now(), user_id: user.id, name, content: parsed });
+                writeStore(STORAGE_TEMPLATES, templates);
+                document.getElementById("template-name-input").value = "";
+                loadTemplateOptions();
+                setMsg("editor-msg", "템플릿이 저장되었습니다.");
+            } catch {
+                setMsg("editor-msg", "유효한 JSON 형식이 아닙니다.", true);
+            }
+        };
+
+        document.getElementById("load-template-btn").onclick = () => {
+            const user = getCurrentUser();
+            const tplId = Number(document.getElementById("template-select").value);
+            if (!tplId) {
+                setMsg("editor-msg", "불러올 템플릿을 선택해주세요.", true);
+                return;
+            }
+            const tpl = readStore(STORAGE_TEMPLATES, []).find((t) => t.id === tplId && t.user_id === user.id);
+            if (!tpl) {
+                setMsg("editor-msg", "템플릿을 찾을 수 없습니다.", true);
+                return;
+            }
+            let currentData = {};
+            try {
+                currentData = JSON.parse(document.getElementById("editor-json").value);
+            } catch {
+                currentData = {};
+            }
+            const currentBlocks = Array.isArray(currentData.blocks) ? currentData.blocks : [];
+            const tplBlocks = Array.isArray(tpl.content.blocks) ? tpl.content.blocks : [];
+            const copied = tplBlocks.map((b, idx) => ({ ...b, id: `${b.id || "block"}_${Date.now()}_${idx}` }));
+            const merged = {
+                ...tpl.content,
+                ...currentData,
+                title: document.getElementById("editor-title").value.trim() || currentData.title || "",
+                subject: document.getElementById("editor-subject").value.trim() || currentData.subject || "",
+                blocks: [...currentBlocks, ...copied],
+            };
+            document.getElementById("editor-json").value = JSON.stringify(merged, null, 2);
+            renderBlocksPreview();
+            setMsg("editor-msg", "템플릿 블록을 현재 노트에 불러왔습니다.");
+        };
+
+        showView("view-home");
+    </script>
+</body>
+</html>

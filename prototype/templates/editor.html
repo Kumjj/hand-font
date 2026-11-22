@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>노트 편집 - Hand Font</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="topbar">
+        <a href="/" class="brand">Hand Font</a>
+        <nav class="nav-links">
+            <span class="user-badge">{{ user.username }}</span>
+            <a href="/notes">내 노트</a>
+            <button type="button" id="logout-btn" class="btn btn-secondary">로그아웃</button>
+        </nav>
+    </header>
+
+    <main class="container" data-page="editor" data-note-id="{{ note_id }}">
+        <section class="card">
+            <div class="editor-header">
+                <h1>노트 편집</h1>
+                <a href="/notes" class="btn btn-secondary">목록으로</a>
+            </div>
+            <div class="form-stack">
+                <div class="inline-form">
+                    <input type="text" id="editor-title" placeholder="노트 제목">
+                    <input type="text" id="editor-subject" placeholder="과목">
+                </div>
+                <label>
+                    블록 데이터 (JSON)
+                    <textarea id="editor-json" rows="16"></textarea>
+                </label>
+                <div class="actions">
+                    <button type="button" id="save-note-btn" class="btn btn-primary">노트 저장</button>
+                    <button type="button" id="insert-sample-btn" class="btn btn-secondary">예시 블록 채우기</button>
+                </div>
+                <p id="editor-message" class="message"></p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>블록 미리보기</h2>
+            <div id="blocks-preview" class="item-list"></div>
+        </section>
+
+        <section class="card">
+            <h2>사용자 정의 템플릿</h2>
+            <div class="inline-form">
+                <input type="text" id="template-name-input" placeholder="저장할 템플릿 이름">
+                <button type="button" id="save-template-btn" class="btn btn-primary">현재 블록을 템플릿으로 저장</button>
+            </div>
+            <div class="inline-form template-load-row">
+                <select id="template-select">
+                    <option value="">불러올 템플릿 선택</option>
+                </select>
+                <button type="button" id="load-template-btn" class="btn btn-secondary">템플릿 불러오기</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

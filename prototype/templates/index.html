@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Font</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="topbar">
+        <a href="/" class="brand">Hand Font</a>
+        <nav class="nav-links">
+            {% if user %}
+                <span class="user-badge">{{ user.username }}</span>
+                <a href="/notes">내 노트</a>
+                <button type="button" id="logout-btn" class="btn btn-secondary">로그아웃</button>
+            {% else %}
+                <a href="/login">로그인</a>
+                <a href="/register">회원가입</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="card hero">
+            <h1>Hand Font</h1>
+            <p>AI 기반 필기 보정 및 블록 기반 디지털 노트 아카이빙 프로토타입</p>
+            <div class="actions">
+                {% if user %}
+                    <a href="/notes" class="btn btn-primary">내 노트 목록으로 이동</a>
+                {% else %}
+                    <a href="/login" class="btn btn-primary">로그인</a>
+                    <a href="/register" class="btn btn-secondary">회원가입</a>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>지원 기능 (백엔드 프로토타입)</h2>
+            <ul class="simple-list">
+                <li>회원가입 / 로그인 / 로그아웃 및 세션 유지</li>
+                <li>사용자별 블록 기반 노트(JSON) 생성, 조회, 수정, 삭제</li>
+                <li>사용자 정의 필기 템플릿 저장, 불러오기, 수정, 삭제</li>
+            </ul>
+        </section>
+    </main>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
