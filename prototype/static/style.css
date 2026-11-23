@@ -104,6 +104,29 @@ body {
     margin-top: 12px;
 }
 
+.category-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.cat-tab {
+    padding: 6px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 999px;
+    background-color: #ffffff;
+    color: #374151;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+.cat-tab.active {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+}
+
 .template-load-row {
     margin-top: 12px;
 }

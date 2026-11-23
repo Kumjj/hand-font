@@ -22,14 +22,19 @@
             <h2>새 노트 만들기</h2>
             <form id="create-note-form" class="inline-form">
                 <input type="text" id="new-note-title" placeholder="노트 제목" required>
-                <input type="text" id="new-note-subject" placeholder="과목 (선택)">
+                <select id="new-note-category-select">
+                    <option value="">카테고리 없음 (미분류)</option>
+                    <option value="__custom__">+ 새 카테고리 직접 입력</option>
+                </select>
+                <input type="text" id="new-note-subject" class="hidden" placeholder="새 카테고리 이름 입력">
                 <button type="submit" class="btn btn-primary">새 노트 생성</button>
             </form>
             <p id="notes-message" class="message"></p>
         </section>
 
         <section class="card">
-            <h2>저장된 노트 목록</h2>
+            <h2>저장된 노트 목록 (카테고리별 탐색)</h2>
+            <div id="category-tabs" class="category-tabs"></div>
             <div id="notes-list" class="item-list"></div>
         </section>
 
