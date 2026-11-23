@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 prototype/database.db
 .ipynb_checkpoints/
+*.key
+*.pem
+ORACLE_HANDOFF.md

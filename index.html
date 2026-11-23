@@ -40,7 +40,7 @@
             border-radius: 999px;
         }
         .container {
-            max-width: 860px;
+            max-width: 960px;
             margin: 28px auto;
             padding: 0 16px;
             display: flex;
@@ -62,13 +62,14 @@
         .form-stack {
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
         }
         .form-stack label {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
             font-weight: 500;
+            font-size: 0.9rem;
         }
         .inline-form {
             display: flex;
@@ -77,13 +78,19 @@
         }
         .inline-form input, .inline-form select {
             flex: 1;
-            min-width: 160px;
+            min-width: 150px;
+        }
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
         }
         .template-load-row {
             margin-top: 12px;
         }
         input, select, textarea {
-            padding: 10px 12px;
+            padding: 9px 11px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
             font-size: 0.95rem;
@@ -93,16 +100,19 @@
             font-family: Consolas, Monaco, monospace;
             resize: vertical;
         }
+        .full-width {
+            width: 100%;
+        }
         .actions {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
         }
         .btn {
-            padding: 9px 16px;
+            padding: 9px 15px;
             border: none;
             border-radius: 6px;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
@@ -144,10 +154,69 @@
             align-items: center;
             margin-bottom: 14px;
         }
+        .editor-workspace {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+        @media (max-width: 760px) {
+            .editor-workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+        .page-canvas {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 210 / 297;
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            overflow: hidden;
+            background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px),
+                              linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+            background-size: 10% 10%;
+        }
+        .canvas-block {
+            position: absolute;
+            padding: 6px 8px;
+            border: 1px solid #93c5fd;
+            background-color: rgba(239, 246, 255, 0.92);
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            overflow: hidden;
+            font-size: 0.85rem;
+        }
+        .canvas-block.type-math {
+            border-color: #c4b5fd;
+            background-color: rgba(245, 243, 255, 0.92);
+            font-family: Consolas, Monaco, monospace;
+        }
+        .canvas-block.type-image {
+            border-color: #86efac;
+            background-color: rgba(240, 253, 244, 0.92);
+        }
+        .canvas-block.selected {
+            border: 2px solid #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+        .block-tag {
+            font-size: 0.7rem;
+            color: #4b5563;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
         .message {
             min-height: 20px;
             font-size: 0.9rem;
             color: #2563eb;
+            margin-bottom: 0;
         }
         .message.error {
             color: #dc2626;
@@ -173,7 +242,7 @@
             <h2>지원 기능</h2>
             <ul>
                 <li>회원가입 / 로그인 / 로그아웃 및 브라우저 세션 유지</li>
-                <li>사용자별 블록 기반 노트(JSON) 생성, 조회, 수정, 삭제</li>
+                <li>초경량 블록 편집기 (상대 좌표 드래그 이동, 블록 추가/수정/삭제)</li>
                 <li>사용자 정의 필기 템플릿 저장, 불러오기, 이름 수정, 삭제</li>
             </ul>
         </section>
@@ -228,29 +297,53 @@
     <main class="container hidden" id="view-editor">
         <section class="card">
             <div class="editor-header">
-                <h1>노트 편집</h1>
+                <h1>초경량 노트 편집기</h1>
                 <button type="button" id="back-notes-btn" class="btn btn-secondary">목록으로</button>
             </div>
-            <div class="form-stack">
-                <div class="inline-form">
-                    <input type="text" id="editor-title" placeholder="노트 제목">
-                    <input type="text" id="editor-subject" placeholder="과목">
+            <div class="inline-form">
+                <input type="text" id="editor-title" placeholder="노트 제목">
+                <input type="text" id="editor-subject" placeholder="과목">
+                <button type="button" id="save-note-btn" class="btn btn-primary">노트 저장</button>
+            </div>
+            <div class="toolbar">
+                <button type="button" id="add-text-btn" class="btn btn-secondary">+ 텍스트 블록</button>
+                <button type="button" id="add-math-btn" class="btn btn-secondary">+ 수식 블록</button>
+                <button type="button" id="insert-sample-btn" class="btn btn-secondary">예시 블록 채우기</button>
+                <button type="button" id="ai-placeholder-btn" class="btn btn-secondary">AI 필기 분석 (준비 중)</button>
+            </div>
+            <p id="editor-msg" class="message"></p>
+        </section>
+
+        <section class="editor-workspace">
+            <div class="card">
+                <h2>페이지 캔버스 (블록 드래그 이동)</h2>
+                <div id="page-canvas" class="page-canvas"></div>
+            </div>
+            <div class="card">
+                <h2>선택된 블록 편집</h2>
+                <div id="block-inspector-empty" class="item-meta">캔버스에서 블록을 클릭하면 여기서 수정할 수 있습니다.</div>
+                <div id="block-inspector" class="form-stack hidden">
+                    <label>
+                        블록 유형
+                        <select id="prop-type">
+                            <option value="text">text (텍스트)</option>
+                            <option value="math">math (수식)</option>
+                            <option value="image">image (그림/필기)</option>
+                        </select>
+                    </label>
+                    <label>내용 <textarea id="prop-content" rows="3"></textarea></label>
+                    <div class="grid-2">
+                        <label>X (0~1) <input type="number" id="prop-x" step="0.01" min="0" max="1"></label>
+                        <label>Y (0~1) <input type="number" id="prop-y" step="0.01" min="0" max="1"></label>
+                        <label>너비 (0~1) <input type="number" id="prop-width" step="0.01" min="0.05" max="1"></label>
+                        <label>높이 (0~1) <input type="number" id="prop-height" step="0.01" min="0.04" max="1"></label>
+                    </div>
+                    <label>레이어 (zIndex) <input type="number" id="prop-z" step="1" min="1"></label>
+                    <button type="button" id="delete-block-btn" class="btn btn-danger">선택 블록 삭제</button>
                 </div>
-                <label>
-                    블록 데이터 (JSON)
-                    <textarea id="editor-json" rows="16"></textarea>
-                </label>
-                <div class="actions">
-                    <button type="button" id="save-note-btn" class="btn btn-primary">노트 저장</button>
-                    <button type="button" id="insert-sample-btn" class="btn btn-secondary">예시 블록 채우기</button>
-                </div>
-                <p id="editor-msg" class="message"></p>
             </div>
         </section>
-        <section class="card">
-            <h2>블록 미리보기</h2>
-            <div id="blocks-preview" class="item-list"></div>
-        </section>
+
         <section class="card">
             <h2>사용자 정의 템플릿</h2>
             <div class="inline-form">
@@ -264,6 +357,14 @@
                 <button type="button" id="load-template-btn" class="btn btn-secondary">템플릿 불러오기</button>
             </div>
         </section>
+
+        <section class="card">
+            <div class="editor-header">
+                <h2>블록 JSON 데이터</h2>
+                <button type="button" id="apply-json-btn" class="btn btn-secondary">JSON 반영하기</button>
+            </div>
+            <textarea id="editor-json" rows="12" class="full-width"></textarea>
+        </section>
     </main>
 
     <script>
@@ -273,6 +374,8 @@
         const STORAGE_SESSION = "hf_session";
 
         let currentNoteId = null;
+        let docData = { title: "", subject: "", page: { width: 210, height: 297, unit: "mm" }, blocks: [] };
+        let selectedBlockId = null;
 
         function readStore(key, fallback) {
             try {
@@ -435,6 +538,105 @@
             });
         }
 
+        function syncJsonFromDoc() {
+            docData.title = document.getElementById("editor-title").value.trim();
+            docData.subject = document.getElementById("editor-subject").value.trim();
+            document.getElementById("editor-json").value = JSON.stringify(docData, null, 2);
+        }
+
+        function renderInspector() {
+            const emptyEl = document.getElementById("block-inspector-empty");
+            const inspEl = document.getElementById("block-inspector");
+            const block = (docData.blocks || []).find((b) => b.id === selectedBlockId);
+            if (!block) {
+                emptyEl.classList.remove("hidden");
+                inspEl.classList.add("hidden");
+                return;
+            }
+            emptyEl.classList.add("hidden");
+            inspEl.classList.remove("hidden");
+            document.getElementById("prop-type").value = block.type || "text";
+            document.getElementById("prop-content").value = block.content || "";
+            document.getElementById("prop-x").value = block.x ?? 0.1;
+            document.getElementById("prop-y").value = block.y ?? 0.1;
+            document.getElementById("prop-width").value = block.width ?? 0.4;
+            document.getElementById("prop-height").value = block.height ?? 0.08;
+            document.getElementById("prop-z").value = block.zIndex ?? 1;
+        }
+
+        function renderCanvas() {
+            const canvasEl = document.getElementById("page-canvas");
+            canvasEl.innerHTML = "";
+            const blocks = Array.isArray(docData.blocks) ? docData.blocks : [];
+            blocks.forEach((b) => {
+                const el = document.createElement("div");
+                el.className = `canvas-block type-${b.type || "text"}${b.id === selectedBlockId ? " selected" : ""}`;
+                el.style.left = `${(b.x ?? 0.1) * 100}%`;
+                el.style.top = `${(b.y ?? 0.1) * 100}%`;
+                el.style.width = `${(b.width ?? 0.4) * 100}%`;
+                el.style.height = `${(b.height ?? 0.08) * 100}%`;
+                el.style.zIndex = b.zIndex ?? 1;
+
+                const tag = document.createElement("div");
+                tag.className = "block-tag";
+                tag.textContent = b.type || "text";
+
+                const body = document.createElement("div");
+                body.textContent = b.content || "";
+
+                el.appendChild(tag);
+                el.appendChild(body);
+
+                el.addEventListener("mousedown", (e) => {
+                    e.preventDefault();
+                    selectedBlockId = b.id;
+                    renderInspector();
+                    const rect = canvasEl.getBoundingClientRect();
+                    const startX = e.clientX;
+                    const startY = e.clientY;
+                    const origX = b.x ?? 0.1;
+                    const origY = b.y ?? 0.1;
+
+                    function onMove(ev) {
+                        const dx = (ev.clientX - startX) / rect.width;
+                        const dy = (ev.clientY - startY) / rect.height;
+                        b.x = Math.max(0, Math.min(1 - (b.width ?? 0.2), Number((origX + dx).toFixed(3))));
+                        b.y = Math.max(0, Math.min(1 - (b.height ?? 0.06), Number((origY + dy).toFixed(3))));
+                        el.style.left = `${b.x * 100}%`;
+                        el.style.top = `${b.y * 100}%`;
+                        document.getElementById("prop-x").value = b.x;
+                        document.getElementById("prop-y").value = b.y;
+                        syncJsonFromDoc();
+                    }
+
+                    function onUp() {
+                        window.removeEventListener("mousemove", onMove);
+                        window.removeEventListener("mouseup", onUp);
+                        renderCanvas();
+                    }
+
+                    window.addEventListener("mousemove", onMove);
+                    window.addEventListener("mouseup", onUp);
+                });
+
+                canvasEl.appendChild(el);
+            });
+        }
+
+        function updateSelectedBlock() {
+            const block = (docData.blocks || []).find((b) => b.id === selectedBlockId);
+            if (!block) return;
+            block.type = document.getElementById("prop-type").value;
+            block.content = document.getElementById("prop-content").value;
+            block.x = Number(document.getElementById("prop-x").value) || 0;
+            block.y = Number(document.getElementById("prop-y").value) || 0;
+            block.width = Math.max(0.05, Number(document.getElementById("prop-width").value) || 0.3);
+            block.height = Math.max(0.04, Number(document.getElementById("prop-height").value) || 0.08);
+            block.zIndex = parseInt(document.getElementById("prop-z").value, 10) || 1;
+            syncJsonFromDoc();
+            renderCanvas();
+        }
+
         function openEditor(noteId) {
             const user = getCurrentUser();
             if (!user) {
@@ -447,40 +649,17 @@
                 return;
             }
             currentNoteId = noteId;
+            selectedBlockId = null;
             document.getElementById("editor-title").value = note.title;
             document.getElementById("editor-subject").value = note.subject || "";
-            document.getElementById("editor-json").value = JSON.stringify(note.content, null, 2);
+            docData = JSON.parse(JSON.stringify(note.content || { page: { width: 210, height: 297, unit: "mm" }, blocks: [] }));
+            if (!Array.isArray(docData.blocks)) docData.blocks = [];
+            syncJsonFromDoc();
             setMsg("editor-msg", "");
-            renderBlocksPreview();
+            renderInspector();
+            renderCanvas();
             loadTemplateOptions();
             showView("view-editor");
-        }
-
-        function renderBlocksPreview() {
-            const previewEl = document.getElementById("blocks-preview");
-            previewEl.innerHTML = "";
-            try {
-                const parsed = JSON.parse(document.getElementById("editor-json").value);
-                const blocks = Array.isArray(parsed.blocks) ? parsed.blocks : [];
-                if (blocks.length === 0) {
-                    previewEl.innerHTML = "<p class='item-meta'>블록이 없습니다.</p>";
-                    return;
-                }
-                blocks.forEach((b) => {
-                    const row = document.createElement("div");
-                    row.className = "item-row";
-                    row.innerHTML = `
-                        <div>
-                            <strong>[${b.type || "text"}] ${b.id || ""}</strong>
-                            <div>${b.content || ""}</div>
-                            <div class="item-meta">x: ${b.x ?? 0}, y: ${b.y ?? 0}, w: ${b.width ?? 0}, h: ${b.height ?? 0}, z: ${b.zIndex ?? 1}</div>
-                        </div>
-                    `;
-                    previewEl.appendChild(row);
-                });
-            } catch {
-                previewEl.innerHTML = "<p class='message error'>JSON 형식이 올바르지 않습니다.</p>";
-            }
         }
 
         function loadTemplateOptions() {
@@ -497,11 +676,61 @@
                 });
         }
 
+        function addNewBlock(type) {
+            if (!Array.isArray(docData.blocks)) docData.blocks = [];
+            const newBlock = {
+                id: `block_${Date.now()}`,
+                type,
+                content: type === "math" ? "a^2 + b^2 = c^2" : "새 텍스트 블록",
+                x: 0.1,
+                y: Math.min(0.85, 0.1 + docData.blocks.length * 0.1),
+                width: 0.5,
+                height: 0.09,
+                zIndex: docData.blocks.length + 1,
+            };
+            docData.blocks.push(newBlock);
+            selectedBlockId = newBlock.id;
+            syncJsonFromDoc();
+            renderInspector();
+            renderCanvas();
+        }
+
         document.getElementById("nav-home").onclick = () => showView("view-home");
         document.getElementById("go-register-btn").onclick = () => showView("view-register");
         document.getElementById("go-login-btn").onclick = () => showView("view-login");
         document.getElementById("back-notes-btn").onclick = openNotesView;
-        document.getElementById("editor-json").addEventListener("input", renderBlocksPreview);
+        document.getElementById("add-text-btn").onclick = () => addNewBlock("text");
+        document.getElementById("add-math-btn").onclick = () => addNewBlock("math");
+
+        document.getElementById("ai-placeholder-btn").onclick = () => {
+            setMsg("editor-msg", "AI 모델(YOLO/PaddleOCR/UniMERNet) 연동이 아직 보류 상태입니다. 모델이 준비되면 자동 분석 블록이 추가됩니다.");
+        };
+
+        ["prop-type", "prop-content", "prop-x", "prop-y", "prop-width", "prop-height", "prop-z"].forEach((id) => {
+            document.getElementById(id).addEventListener("input", updateSelectedBlock);
+        });
+
+        document.getElementById("delete-block-btn").onclick = () => {
+            docData.blocks = (docData.blocks || []).filter((b) => b.id !== selectedBlockId);
+            selectedBlockId = null;
+            syncJsonFromDoc();
+            renderInspector();
+            renderCanvas();
+        };
+
+        document.getElementById("apply-json-btn").onclick = () => {
+            try {
+                const parsed = JSON.parse(document.getElementById("editor-json").value);
+                if (!Array.isArray(parsed.blocks)) parsed.blocks = [];
+                docData = parsed;
+                selectedBlockId = null;
+                renderInspector();
+                renderCanvas();
+                setMsg("editor-msg", "JSON 데이터를 캔버스에 반영했습니다.");
+            } catch {
+                setMsg("editor-msg", "유효한 JSON 형식이 아닙니다.", true);
+            }
+        };
 
         document.getElementById("register-form").onsubmit = (e) => {
             e.preventDefault();
@@ -565,36 +794,34 @@
         };
 
         document.getElementById("insert-sample-btn").onclick = () => {
-            const sample = {
+            docData = {
                 title: document.getElementById("editor-title").value.trim() || "수학 필기",
                 subject: document.getElementById("editor-subject").value.trim() || "수학",
                 page: { width: 210, height: 297, unit: "mm" },
                 blocks: [
-                    { id: "block_1", type: "text", content: "이차방정식의 근의 공식", x: 0.1, y: 0.2, width: 0.6, height: 0.08, zIndex: 1 },
-                    { id: "block_2", type: "math", content: "x^2+2x+1=0", x: 0.1, y: 0.3, width: 0.5, height: 0.1, zIndex: 2 },
+                    { id: "block_1", type: "text", content: "이차방정식의 근의 공식", x: 0.1, y: 0.12, width: 0.6, height: 0.08, zIndex: 1 },
+                    { id: "block_2", type: "math", content: "x = (-b ± √(b² - 4ac)) / 2a", x: 0.1, y: 0.24, width: 0.65, height: 0.1, zIndex: 2 },
                 ],
             };
-            document.getElementById("editor-json").value = JSON.stringify(sample, null, 2);
-            renderBlocksPreview();
+            selectedBlockId = "block_1";
+            syncJsonFromDoc();
+            renderInspector();
+            renderCanvas();
         };
 
         document.getElementById("save-note-btn").onclick = () => {
             const user = getCurrentUser();
-            try {
-                const parsed = JSON.parse(document.getElementById("editor-json").value);
-                const title = document.getElementById("editor-title").value.trim() || "새 노트";
-                const subject = document.getElementById("editor-subject").value.trim();
-                const updatedAt = nowString();
-                const notes = readStore(STORAGE_NOTES, []).map((n) =>
-                    n.id === currentNoteId && n.user_id === user.id
-                        ? { ...n, title, subject, content: parsed, updated_at: updatedAt }
-                        : n
-                );
-                writeStore(STORAGE_NOTES, notes);
-                setMsg("editor-msg", `노트가 저장되었습니다. (${updatedAt})`);
-            } catch {
-                setMsg("editor-msg", "유효한 JSON 형식이 아닙니다.", true);
-            }
+            syncJsonFromDoc();
+            const title = document.getElementById("editor-title").value.trim() || "새 노트";
+            const subject = document.getElementById("editor-subject").value.trim();
+            const updatedAt = nowString();
+            const notes = readStore(STORAGE_NOTES, []).map((n) =>
+                n.id === currentNoteId && n.user_id === user.id
+                    ? { ...n, title, subject, content: docData, updated_at: updatedAt }
+                    : n
+            );
+            writeStore(STORAGE_NOTES, notes);
+            setMsg("editor-msg", `노트가 저장되었습니다. (${updatedAt})`);
         };
 
         document.getElementById("save-template-btn").onclick = () => {
@@ -604,17 +831,13 @@
                 setMsg("editor-msg", "템플릿 이름을 입력해주세요.", true);
                 return;
             }
-            try {
-                const parsed = JSON.parse(document.getElementById("editor-json").value);
-                const templates = readStore(STORAGE_TEMPLATES, []);
-                templates.unshift({ id: Date.now(), user_id: user.id, name, content: parsed });
-                writeStore(STORAGE_TEMPLATES, templates);
-                document.getElementById("template-name-input").value = "";
-                loadTemplateOptions();
-                setMsg("editor-msg", "템플릿이 저장되었습니다.");
-            } catch {
-                setMsg("editor-msg", "유효한 JSON 형식이 아닙니다.", true);
-            }
+            syncJsonFromDoc();
+            const templates = readStore(STORAGE_TEMPLATES, []);
+            templates.unshift({ id: Date.now(), user_id: user.id, name, content: JSON.parse(JSON.stringify(docData)) });
+            writeStore(STORAGE_TEMPLATES, templates);
+            document.getElementById("template-name-input").value = "";
+            loadTemplateOptions();
+            setMsg("editor-msg", "템플릿이 저장되었습니다.");
         };
 
         document.getElementById("load-template-btn").onclick = () => {
@@ -629,24 +852,12 @@
                 setMsg("editor-msg", "템플릿을 찾을 수 없습니다.", true);
                 return;
             }
-            let currentData = {};
-            try {
-                currentData = JSON.parse(document.getElementById("editor-json").value);
-            } catch {
-                currentData = {};
-            }
-            const currentBlocks = Array.isArray(currentData.blocks) ? currentData.blocks : [];
+            const currentBlocks = Array.isArray(docData.blocks) ? docData.blocks : [];
             const tplBlocks = Array.isArray(tpl.content.blocks) ? tpl.content.blocks : [];
             const copied = tplBlocks.map((b, idx) => ({ ...b, id: `${b.id || "block"}_${Date.now()}_${idx}` }));
-            const merged = {
-                ...tpl.content,
-                ...currentData,
-                title: document.getElementById("editor-title").value.trim() || currentData.title || "",
-                subject: document.getElementById("editor-subject").value.trim() || currentData.subject || "",
-                blocks: [...currentBlocks, ...copied],
-            };
-            document.getElementById("editor-json").value = JSON.stringify(merged, null, 2);
-            renderBlocksPreview();
+            docData.blocks = [...currentBlocks, ...copied];
+            syncJsonFromDoc();
+            renderCanvas();
             setMsg("editor-msg", "템플릿 블록을 현재 노트에 불러왔습니다.");
         };
 

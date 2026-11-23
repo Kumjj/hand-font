@@ -47,7 +47,7 @@ body {
 }
 
 .container {
-    max-width: 860px;
+    max-width: 960px;
     margin: 28px auto;
     padding: 0 16px;
     display: flex;
@@ -74,14 +74,15 @@ body {
 .form-stack {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
 }
 
 .form-stack label {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     font-weight: 500;
+    font-size: 0.9rem;
 }
 
 .inline-form {
@@ -93,7 +94,14 @@ body {
 .inline-form input,
 .inline-form select {
     flex: 1;
-    min-width: 160px;
+    min-width: 150px;
+}
+
+.toolbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
 }
 
 .template-load-row {
@@ -103,7 +111,7 @@ body {
 input,
 select,
 textarea {
-    padding: 10px 12px;
+    padding: 9px 11px;
     border: 1px solid #d1d5db;
     border-radius: 6px;
     font-size: 0.95rem;
@@ -115,6 +123,10 @@ textarea {
     resize: vertical;
 }
 
+.full-width {
+    width: 100%;
+}
+
 .actions {
     display: flex;
     gap: 10px;
@@ -122,10 +134,10 @@ textarea {
 }
 
 .btn {
-    padding: 9px 16px;
+    padding: 9px 15px;
     border: none;
     border-radius: 6px;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     cursor: pointer;
     text-decoration: none;
     display: inline-block;
@@ -175,10 +187,82 @@ textarea {
     margin-bottom: 14px;
 }
 
+.editor-workspace {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+@media (max-width: 760px) {
+    .editor-workspace {
+        grid-template-columns: 1fr;
+    }
+}
+
+.page-canvas {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 210 / 297;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    overflow: hidden;
+    background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px),
+                      linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+    background-size: 10% 10%;
+}
+
+.canvas-block {
+    position: absolute;
+    padding: 6px 8px;
+    border: 1px solid #93c5fd;
+    background-color: rgba(239, 246, 255, 0.92);
+    border-radius: 4px;
+    cursor: move;
+    user-select: none;
+    overflow: hidden;
+    font-size: 0.85rem;
+}
+
+.canvas-block.type-math {
+    border-color: #c4b5fd;
+    background-color: rgba(245, 243, 255, 0.92);
+    font-family: Consolas, Monaco, monospace;
+}
+
+.canvas-block.type-image {
+    border-color: #86efac;
+    background-color: rgba(240, 253, 244, 0.92);
+}
+
+.canvas-block.selected {
+    border: 2px solid #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.block-tag {
+    font-size: 0.7rem;
+    color: #4b5563;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.hidden {
+    display: none;
+}
+
 .message {
     min-height: 20px;
     font-size: 0.9rem;
     color: #2563eb;
+    margin-bottom: 0;
 }
 
 .message.error {

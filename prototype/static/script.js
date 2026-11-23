@@ -186,43 +186,185 @@ if (currentPage === "editor") {
     const titleInput = document.getElementById("editor-title");
     const subjectInput = document.getElementById("editor-subject");
     const jsonTextarea = document.getElementById("editor-json");
-    const previewEl = document.getElementById("blocks-preview");
+    const canvasEl = document.getElementById("page-canvas");
     const msgEl = document.getElementById("editor-message");
     const templateSelect = document.getElementById("template-select");
+    const inspectorEmpty = document.getElementById("block-inspector-empty");
+    const inspectorEl = document.getElementById("block-inspector");
+    const propType = document.getElementById("prop-type");
+    const propContent = document.getElementById("prop-content");
+    const propX = document.getElementById("prop-x");
+    const propY = document.getElementById("prop-y");
+    const propWidth = document.getElementById("prop-width");
+    const propHeight = document.getElementById("prop-height");
+    const propZ = document.getElementById("prop-z");
 
-    function renderBlocksPreview() {
-        previewEl.innerHTML = "";
+    let docData = {
+        title: "",
+        subject: "",
+        page: { width: 210, height: 297, unit: "mm" },
+        blocks: [],
+    };
+    let selectedBlockId = null;
+
+    function syncJsonFromDoc() {
+        docData.title = titleInput.value.trim();
+        docData.subject = subjectInput.value.trim();
+        jsonTextarea.value = JSON.stringify(docData, null, 2);
+    }
+
+    function renderInspector() {
+        const block = (docData.blocks || []).find((b) => b.id === selectedBlockId);
+        if (!block) {
+            inspectorEmpty.classList.remove("hidden");
+            inspectorEl.classList.add("hidden");
+            return;
+        }
+        inspectorEmpty.classList.add("hidden");
+        inspectorEl.classList.remove("hidden");
+        propType.value = block.type || "text";
+        propContent.value = block.content || "";
+        propX.value = block.x ?? 0.1;
+        propY.value = block.y ?? 0.1;
+        propWidth.value = block.width ?? 0.4;
+        propHeight.value = block.height ?? 0.08;
+        propZ.value = block.zIndex ?? 1;
+    }
+
+    function renderCanvas() {
+        canvasEl.innerHTML = "";
+        const blocks = Array.isArray(docData.blocks) ? docData.blocks : [];
+        blocks.forEach((b) => {
+            const el = document.createElement("div");
+            el.className = `canvas-block type-${b.type || "text"}${b.id === selectedBlockId ? " selected" : ""}`;
+            el.style.left = `${(b.x ?? 0.1) * 100}%`;
+            el.style.top = `${(b.y ?? 0.1) * 100}%`;
+            el.style.width = `${(b.width ?? 0.4) * 100}%`;
+            el.style.height = `${(b.height ?? 0.08) * 100}%`;
+            el.style.zIndex = b.zIndex ?? 1;
+
+            const tag = document.createElement("div");
+            tag.className = "block-tag";
+            tag.textContent = b.type || "text";
+
+            const body = document.createElement("div");
+            body.textContent = b.content || "";
+
+            el.appendChild(tag);
+            el.appendChild(body);
+
+            el.addEventListener("mousedown", (e) => {
+                e.preventDefault();
+                selectedBlockId = b.id;
+                renderInspector();
+                const rect = canvasEl.getBoundingClientRect();
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const origX = b.x ?? 0.1;
+                const origY = b.y ?? 0.1;
+
+                function onMove(ev) {
+                    const dx = (ev.clientX - startX) / rect.width;
+                    const dy = (ev.clientY - startY) / rect.height;
+                    b.x = Math.max(0, Math.min(1 - (b.width ?? 0.2), Number((origX + dx).toFixed(3))));
+                    b.y = Math.max(0, Math.min(1 - (b.height ?? 0.06), Number((origY + dy).toFixed(3))));
+                    el.style.left = `${b.x * 100}%`;
+                    el.style.top = `${b.y * 100}%`;
+                    propX.value = b.x;
+                    propY.value = b.y;
+                    syncJsonFromDoc();
+                }
+
+                function onUp() {
+                    window.removeEventListener("mousemove", onMove);
+                    window.removeEventListener("mouseup", onUp);
+                    renderCanvas();
+                }
+
+                window.addEventListener("mousemove", onMove);
+                window.addEventListener("mouseup", onUp);
+            });
+
+            canvasEl.appendChild(el);
+        });
+    }
+
+    function updateSelectedBlock() {
+        const block = (docData.blocks || []).find((b) => b.id === selectedBlockId);
+        if (!block) return;
+        block.type = propType.value;
+        block.content = propContent.value;
+        block.x = Number(propX.value) || 0;
+        block.y = Number(propY.value) || 0;
+        block.width = Math.max(0.05, Number(propWidth.value) || 0.3);
+        block.height = Math.max(0.04, Number(propHeight.value) || 0.08);
+        block.zIndex = parseInt(propZ.value, 10) || 1;
+        syncJsonFromDoc();
+        renderCanvas();
+    }
+
+    [propType, propContent, propX, propY, propWidth, propHeight, propZ].forEach((input) => {
+        input.addEventListener("input", updateSelectedBlock);
+    });
+
+    document.getElementById("delete-block-btn").addEventListener("click", () => {
+        docData.blocks = (docData.blocks || []).filter((b) => b.id !== selectedBlockId);
+        selectedBlockId = null;
+        syncJsonFromDoc();
+        renderInspector();
+        renderCanvas();
+    });
+
+    function addNewBlock(type) {
+        if (!Array.isArray(docData.blocks)) docData.blocks = [];
+        const newBlock = {
+            id: `block_${Date.now()}`,
+            type,
+            content: type === "math" ? "a^2 + b^2 = c^2" : "새 텍스트 블록",
+            x: 0.1,
+            y: Math.min(0.85, 0.1 + docData.blocks.length * 0.1),
+            width: 0.5,
+            height: 0.09,
+            zIndex: docData.blocks.length + 1,
+        };
+        docData.blocks.push(newBlock);
+        selectedBlockId = newBlock.id;
+        syncJsonFromDoc();
+        renderInspector();
+        renderCanvas();
+    }
+
+    document.getElementById("add-text-btn").addEventListener("click", () => addNewBlock("text"));
+    document.getElementById("add-math-btn").addEventListener("click", () => addNewBlock("math"));
+
+    document.getElementById("ai-placeholder-btn").addEventListener("click", () => {
+        showMessage(msgEl, "AI 모델(YOLO/PaddleOCR/UniMERNet) 연동이 아직 보류 상태입니다. 모델이 준비되면 자동 분석 블록이 추가됩니다.");
+    });
+
+    document.getElementById("apply-json-btn").addEventListener("click", () => {
         try {
             const parsed = JSON.parse(jsonTextarea.value);
-            const blocks = Array.isArray(parsed.blocks) ? parsed.blocks : [];
-            if (blocks.length === 0) {
-                previewEl.innerHTML = "<p class='item-meta'>블록이 없습니다.</p>";
-                return;
-            }
-            blocks.forEach((b) => {
-                const row = document.createElement("div");
-                row.className = "item-row";
-                row.innerHTML = `
-                    <div>
-                        <strong>[${b.type || "text"}] ${b.id || ""}</strong>
-                        <div>${b.content || ""}</div>
-                        <div class="item-meta">x: ${b.x ?? 0}, y: ${b.y ?? 0}, w: ${b.width ?? 0}, h: ${b.height ?? 0}, z: ${b.zIndex ?? 1}</div>
-                    </div>
-                `;
-                previewEl.appendChild(row);
-            });
+            if (!Array.isArray(parsed.blocks)) parsed.blocks = [];
+            docData = parsed;
+            selectedBlockId = null;
+            renderInspector();
+            renderCanvas();
+            showMessage(msgEl, "JSON 데이터를 캔버스에 반영했습니다.");
         } catch {
-            previewEl.innerHTML = "<p class='message error'>JSON 형식이 올바르지 않습니다.</p>";
+            showMessage(msgEl, "유효한 JSON 형식이 아닙니다.", true);
         }
-    }
+    });
 
     async function loadNote() {
         try {
             const note = await requestJson(`/api/notes/${noteId}`);
             titleInput.value = note.title;
             subjectInput.value = note.subject || "";
-            jsonTextarea.value = JSON.stringify(note.content, null, 2);
-            renderBlocksPreview();
+            docData = note.content || { page: { width: 210, height: 297, unit: "mm" }, blocks: [] };
+            if (!Array.isArray(docData.blocks)) docData.blocks = [];
+            syncJsonFromDoc();
+            renderInspector();
+            renderCanvas();
         } catch (err) {
             showMessage(msgEl, err.message, true);
         }
@@ -239,10 +381,8 @@ if (currentPage === "editor") {
         });
     }
 
-    jsonTextarea.addEventListener("input", renderBlocksPreview);
-
     document.getElementById("insert-sample-btn").addEventListener("click", () => {
-        const sample = {
+        docData = {
             title: titleInput.value || "수학 필기",
             subject: subjectInput.value || "수학",
             page: { width: 210, height: 297, unit: "mm" },
@@ -252,7 +392,7 @@ if (currentPage === "editor") {
                     type: "text",
                     content: "이차방정식의 근의 공식",
                     x: 0.1,
-                    y: 0.2,
+                    y: 0.12,
                     width: 0.6,
                     height: 0.08,
                     zIndex: 1,
@@ -260,32 +400,34 @@ if (currentPage === "editor") {
                 {
                     id: "block_2",
                     type: "math",
-                    content: "x^2+2x+1=0",
+                    content: "x = (-b ± √(b² - 4ac)) / 2a",
                     x: 0.1,
-                    y: 0.3,
-                    width: 0.5,
+                    y: 0.24,
+                    width: 0.65,
                     height: 0.1,
                     zIndex: 2,
                 },
             ],
         };
-        jsonTextarea.value = JSON.stringify(sample, null, 2);
-        renderBlocksPreview();
+        selectedBlockId = "block_1";
+        syncJsonFromDoc();
+        renderInspector();
+        renderCanvas();
     });
 
     document.getElementById("save-note-btn").addEventListener("click", async () => {
         try {
-            const parsedContent = JSON.parse(jsonTextarea.value);
+            syncJsonFromDoc();
             const updated = await requestJson(`/api/notes/${noteId}`, {
                 method: "PUT",
                 body: JSON.stringify({
                     title: titleInput.value.trim(),
                     subject: subjectInput.value.trim(),
-                    content: parsedContent,
+                    content: docData,
                 }),
             });
-            jsonTextarea.value = JSON.stringify(updated.content, null, 2);
-            renderBlocksPreview();
+            docData = updated.content;
+            syncJsonFromDoc();
             showMessage(msgEl, `노트가 저장되었습니다. (${updated.updated_at})`);
         } catch (err) {
             showMessage(msgEl, err.message, true);
@@ -299,10 +441,10 @@ if (currentPage === "editor") {
             return;
         }
         try {
-            const parsedContent = JSON.parse(jsonTextarea.value);
+            syncJsonFromDoc();
             await requestJson("/api/templates", {
                 method: "POST",
-                body: JSON.stringify({ name, content: parsedContent }),
+                body: JSON.stringify({ name, content: docData }),
             });
             document.getElementById("template-name-input").value = "";
             showMessage(msgEl, "템플릿이 저장되었습니다.");
@@ -320,27 +462,15 @@ if (currentPage === "editor") {
         }
         try {
             const tpl = await requestJson(`/api/templates/${templateId}`);
-            let currentData = {};
-            try {
-                currentData = JSON.parse(jsonTextarea.value);
-            } catch {
-                currentData = {};
-            }
-            const currentBlocks = Array.isArray(currentData.blocks) ? currentData.blocks : [];
+            const currentBlocks = Array.isArray(docData.blocks) ? docData.blocks : [];
             const tplBlocks = Array.isArray(tpl.content.blocks) ? tpl.content.blocks : [];
             const copiedBlocks = tplBlocks.map((block, idx) => ({
                 ...block,
                 id: `${block.id || "block"}_${Date.now()}_${idx}`,
             }));
-            const merged = {
-                ...tpl.content,
-                ...currentData,
-                title: titleInput.value.trim() || currentData.title || "",
-                subject: subjectInput.value.trim() || currentData.subject || "",
-                blocks: [...currentBlocks, ...copiedBlocks],
-            };
-            jsonTextarea.value = JSON.stringify(merged, null, 2);
-            renderBlocksPreview();
+            docData.blocks = [...currentBlocks, ...copiedBlocks];
+            syncJsonFromDoc();
+            renderCanvas();
             showMessage(msgEl, "템플릿 블록을 현재 노트에 불러왔습니다.");
         } catch (err) {
             showMessage(msgEl, err.message, true);
