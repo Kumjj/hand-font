@@ -213,6 +213,11 @@ textarea {
     background-size: 10% 10%;
 }
 
+.page-canvas.preview-mode {
+    background-image: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
 .canvas-block {
     position: absolute;
     padding: 6px 8px;
@@ -222,13 +227,12 @@ textarea {
     cursor: move;
     user-select: none;
     overflow: hidden;
-    font-size: 0.85rem;
+    font-size: 0.88rem;
 }
 
 .canvas-block.type-math {
     border-color: #c4b5fd;
     background-color: rgba(245, 243, 255, 0.92);
-    font-family: Consolas, Monaco, monospace;
 }
 
 .canvas-block.type-image {
@@ -239,6 +243,17 @@ textarea {
 .canvas-block.selected {
     border: 2px solid #2563eb;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.page-canvas.preview-mode .canvas-block {
+    border-color: transparent;
+    background-color: transparent;
+    cursor: default;
+    box-shadow: none;
+}
+
+.page-canvas.preview-mode .block-tag {
+    display: none;
 }
 
 .block-tag {

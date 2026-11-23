@@ -16,6 +16,39 @@ function showMessage(el, text, isError = false) {
     el.className = isError ? "message error" : "message";
 }
 
+function renderBlockBody(bodyEl, block) {
+    const text = block.content || "";
+    if ((block.type || "text") === "math" && window.katex) {
+        try {
+            window.katex.render(text, bodyEl, { throwOnError: false, displayMode: false });
+            return;
+        } catch {
+            bodyEl.textContent = text;
+            return;
+        }
+    }
+    bodyEl.textContent = text;
+}
+
+function renderStaticCanvas(canvasEl, blocks) {
+    canvasEl.innerHTML = "";
+    const list = Array.isArray(blocks) ? blocks : [];
+    list.forEach((b) => {
+        const el = document.createElement("div");
+        el.className = `canvas-block type-${b.type || "text"}`;
+        el.style.left = `${(b.x ?? 0.1) * 100}%`;
+        el.style.top = `${(b.y ?? 0.1) * 100}%`;
+        el.style.width = `${(b.width ?? 0.4) * 100}%`;
+        el.style.height = `${(b.height ?? 0.08) * 100}%`;
+        el.style.zIndex = b.zIndex ?? 1;
+
+        const body = document.createElement("div");
+        renderBlockBody(body, b);
+        el.appendChild(body);
+        canvasEl.appendChild(el);
+    });
+}
+
 const logoutBtn = document.getElementById("logout-btn");
 if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
@@ -72,6 +105,14 @@ if (currentPage === "notes") {
     const notesListEl = document.getElementById("notes-list");
     const templatesListEl = document.getElementById("templates-list");
     const msgEl = document.getElementById("notes-message");
+    const previewPanel = document.getElementById("preview-panel");
+    const previewTitle = document.getElementById("preview-panel-title");
+    const previewCanvas = document.getElementById("preview-canvas");
+    const tplEditBox = document.getElementById("template-edit-box");
+    const previewTplName = document.getElementById("preview-tpl-name");
+    const previewTplJson = document.getElementById("preview-tpl-json");
+    const previewMsg = document.getElementById("preview-panel-msg");
+    let activeTemplateId = null;
 
     async function loadNotes() {
         const data = await requestJson("/api/notes");
@@ -89,6 +130,7 @@ if (currentPage === "notes") {
                     <div class="item-meta">과목: ${note.subject || "-"} | 수정: ${note.updated_at}</div>
                 </div>
                 <div class="actions">
+                    <button type="button" class="btn btn-secondary" data-preview-note="${note.id}">미리보기</button>
                     <a href="/editor/${note.id}" class="btn btn-primary">열기</a>
                     <button type="button" class="btn btn-danger" data-delete-note="${note.id}">삭제</button>
                 </div>
@@ -113,7 +155,7 @@ if (currentPage === "notes") {
                     <div class="item-meta">ID: ${tpl.id}</div>
                 </div>
                 <div class="actions">
-                    <button type="button" class="btn btn-secondary" data-rename-template="${tpl.id}" data-current-name="${tpl.name}">이름 수정</button>
+                    <button type="button" class="btn btn-secondary" data-edit-template="${tpl.id}">미리보기 / 수정</button>
                     <button type="button" class="btn btn-danger" data-delete-template="${tpl.id}">삭제</button>
                 </div>
             `;
@@ -137,6 +179,21 @@ if (currentPage === "notes") {
     });
 
     notesListEl.addEventListener("click", async (e) => {
+        const previewId = e.target.dataset.previewNote;
+        if (previewId) {
+            try {
+                const note = await requestJson(`/api/notes/${previewId}`);
+                activeTemplateId = null;
+                previewTitle.textContent = `노트 미리보기: ${note.title}`;
+                tplEditBox.classList.add("hidden");
+                previewPanel.classList.remove("hidden");
+                renderStaticCanvas(previewCanvas, (note.content && note.content.blocks) || []);
+                previewPanel.scrollIntoView({ behavior: "smooth" });
+            } catch (err) {
+                showMessage(msgEl, err.message, true);
+            }
+            return;
+        }
         const noteId = e.target.dataset.deleteNote;
         if (!noteId) return;
         try {
@@ -154,26 +211,68 @@ if (currentPage === "notes") {
             try {
                 await requestJson(`/api/templates/${deleteId}`, { method: "DELETE" });
                 showMessage(msgEl, "템플릿이 삭제되었습니다.");
+                if (String(activeTemplateId) === String(deleteId)) {
+                    previewPanel.classList.add("hidden");
+                }
                 await loadTemplates();
             } catch (err) {
                 showMessage(msgEl, err.message, true);
             }
             return;
         }
-        const renameId = e.target.dataset.renameTemplate;
-        if (renameId) {
-            const nextName = prompt("새 템플릿 이름을 입력하세요:", e.target.dataset.currentName || "");
-            if (!nextName || !nextName.trim()) return;
+        const editId = e.target.dataset.editTemplate;
+        if (editId) {
             try {
-                await requestJson(`/api/templates/${renameId}`, {
-                    method: "PUT",
-                    body: JSON.stringify({ name: nextName.trim() }),
-                });
-                showMessage(msgEl, "템플릿 이름이 수정되었습니다.");
-                await loadTemplates();
+                const tpl = await requestJson(`/api/templates/${editId}`);
+                activeTemplateId = tpl.id;
+                previewTitle.textContent = `템플릿 미리보기 / 수정: ${tpl.name}`;
+                previewTplName.value = tpl.name;
+                previewTplJson.value = JSON.stringify(tpl.content, null, 2);
+                showMessage(previewMsg, "");
+                tplEditBox.classList.remove("hidden");
+                previewPanel.classList.remove("hidden");
+                renderStaticCanvas(previewCanvas, (tpl.content && tpl.content.blocks) || []);
+                previewPanel.scrollIntoView({ behavior: "smooth" });
             } catch (err) {
                 showMessage(msgEl, err.message, true);
             }
+        }
+    });
+
+    document.getElementById("close-preview-btn").addEventListener("click", () => {
+        previewPanel.classList.add("hidden");
+        activeTemplateId = null;
+    });
+
+    document.getElementById("preview-tpl-apply-btn").addEventListener("click", () => {
+        try {
+            const parsed = JSON.parse(previewTplJson.value);
+            renderStaticCanvas(previewCanvas, parsed.blocks || []);
+            showMessage(previewMsg, "미리보기에 반영했습니다.");
+        } catch {
+            showMessage(previewMsg, "유효한 JSON 형식이 아닙니다.", true);
+        }
+    });
+
+    document.getElementById("preview-tpl-save-btn").addEventListener("click", async () => {
+        if (!activeTemplateId) return;
+        const name = previewTplName.value.trim();
+        if (!name) {
+            showMessage(previewMsg, "템플릿 이름을 입력해주세요.", true);
+            return;
+        }
+        try {
+            const parsed = JSON.parse(previewTplJson.value);
+            const updated = await requestJson(`/api/templates/${activeTemplateId}`, {
+                method: "PUT",
+                body: JSON.stringify({ name, content: parsed }),
+            });
+            previewTitle.textContent = `템플릿 미리보기 / 수정: ${updated.name}`;
+            renderStaticCanvas(previewCanvas, (updated.content && updated.content.blocks) || []);
+            showMessage(previewMsg, "템플릿이 수정 저장되었습니다.");
+            await loadTemplates();
+        } catch (err) {
+            showMessage(previewMsg, err.message, true);
         }
     });
 
@@ -187,6 +286,8 @@ if (currentPage === "editor") {
     const subjectInput = document.getElementById("editor-subject");
     const jsonTextarea = document.getElementById("editor-json");
     const canvasEl = document.getElementById("page-canvas");
+    const canvasHeading = document.getElementById("canvas-heading");
+    const togglePreviewBtn = document.getElementById("toggle-preview-btn");
     const msgEl = document.getElementById("editor-message");
     const templateSelect = document.getElementById("template-select");
     const inspectorEmpty = document.getElementById("block-inspector-empty");
@@ -206,6 +307,7 @@ if (currentPage === "editor") {
         blocks: [],
     };
     let selectedBlockId = null;
+    let isPreviewMode = false;
 
     function syncJsonFromDoc() {
         docData.title = titleInput.value.trim();
@@ -215,7 +317,7 @@ if (currentPage === "editor") {
 
     function renderInspector() {
         const block = (docData.blocks || []).find((b) => b.id === selectedBlockId);
-        if (!block) {
+        if (!block || isPreviewMode) {
             inspectorEmpty.classList.remove("hidden");
             inspectorEl.classList.add("hidden");
             return;
@@ -232,11 +334,12 @@ if (currentPage === "editor") {
     }
 
     function renderCanvas() {
+        canvasEl.classList.toggle("preview-mode", isPreviewMode);
         canvasEl.innerHTML = "";
         const blocks = Array.isArray(docData.blocks) ? docData.blocks : [];
         blocks.forEach((b) => {
             const el = document.createElement("div");
-            el.className = `canvas-block type-${b.type || "text"}${b.id === selectedBlockId ? " selected" : ""}`;
+            el.className = `canvas-block type-${b.type || "text"}${!isPreviewMode && b.id === selectedBlockId ? " selected" : ""}`;
             el.style.left = `${(b.x ?? 0.1) * 100}%`;
             el.style.top = `${(b.y ?? 0.1) * 100}%`;
             el.style.width = `${(b.width ?? 0.4) * 100}%`;
@@ -248,42 +351,44 @@ if (currentPage === "editor") {
             tag.textContent = b.type || "text";
 
             const body = document.createElement("div");
-            body.textContent = b.content || "";
+            renderBlockBody(body, b);
 
             el.appendChild(tag);
             el.appendChild(body);
 
-            el.addEventListener("mousedown", (e) => {
-                e.preventDefault();
-                selectedBlockId = b.id;
-                renderInspector();
-                const rect = canvasEl.getBoundingClientRect();
-                const startX = e.clientX;
-                const startY = e.clientY;
-                const origX = b.x ?? 0.1;
-                const origY = b.y ?? 0.1;
+            if (!isPreviewMode) {
+                el.addEventListener("mousedown", (e) => {
+                    e.preventDefault();
+                    selectedBlockId = b.id;
+                    renderInspector();
+                    const rect = canvasEl.getBoundingClientRect();
+                    const startX = e.clientX;
+                    const startY = e.clientY;
+                    const origX = b.x ?? 0.1;
+                    const origY = b.y ?? 0.1;
 
-                function onMove(ev) {
-                    const dx = (ev.clientX - startX) / rect.width;
-                    const dy = (ev.clientY - startY) / rect.height;
-                    b.x = Math.max(0, Math.min(1 - (b.width ?? 0.2), Number((origX + dx).toFixed(3))));
-                    b.y = Math.max(0, Math.min(1 - (b.height ?? 0.06), Number((origY + dy).toFixed(3))));
-                    el.style.left = `${b.x * 100}%`;
-                    el.style.top = `${b.y * 100}%`;
-                    propX.value = b.x;
-                    propY.value = b.y;
-                    syncJsonFromDoc();
-                }
+                    function onMove(ev) {
+                        const dx = (ev.clientX - startX) / rect.width;
+                        const dy = (ev.clientY - startY) / rect.height;
+                        b.x = Math.max(0, Math.min(1 - (b.width ?? 0.2), Number((origX + dx).toFixed(3))));
+                        b.y = Math.max(0, Math.min(1 - (b.height ?? 0.06), Number((origY + dy).toFixed(3))));
+                        el.style.left = `${b.x * 100}%`;
+                        el.style.top = `${b.y * 100}%`;
+                        propX.value = b.x;
+                        propY.value = b.y;
+                        syncJsonFromDoc();
+                    }
 
-                function onUp() {
-                    window.removeEventListener("mousemove", onMove);
-                    window.removeEventListener("mouseup", onUp);
-                    renderCanvas();
-                }
+                    function onUp() {
+                        window.removeEventListener("mousemove", onMove);
+                        window.removeEventListener("mouseup", onUp);
+                        renderCanvas();
+                    }
 
-                window.addEventListener("mousemove", onMove);
-                window.addEventListener("mouseup", onUp);
-            });
+                    window.addEventListener("mousemove", onMove);
+                    window.addEventListener("mouseup", onUp);
+                });
+            }
 
             canvasEl.appendChild(el);
         });
@@ -316,15 +421,20 @@ if (currentPage === "editor") {
     });
 
     function addNewBlock(type) {
+        if (isPreviewMode) {
+            isPreviewMode = false;
+            togglePreviewBtn.textContent = "노트 미리보기";
+            canvasHeading.textContent = "페이지 캔버스 (블록 드래그 이동)";
+        }
         if (!Array.isArray(docData.blocks)) docData.blocks = [];
         const newBlock = {
             id: `block_${Date.now()}`,
             type,
-            content: type === "math" ? "a^2 + b^2 = c^2" : "새 텍스트 블록",
+            content: type === "math" ? "\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}" : "새 텍스트 블록",
             x: 0.1,
             y: Math.min(0.85, 0.1 + docData.blocks.length * 0.1),
             width: 0.5,
-            height: 0.09,
+            height: 0.1,
             zIndex: docData.blocks.length + 1,
         };
         docData.blocks.push(newBlock);
@@ -336,6 +446,14 @@ if (currentPage === "editor") {
 
     document.getElementById("add-text-btn").addEventListener("click", () => addNewBlock("text"));
     document.getElementById("add-math-btn").addEventListener("click", () => addNewBlock("math"));
+
+    togglePreviewBtn.addEventListener("click", () => {
+        isPreviewMode = !isPreviewMode;
+        togglePreviewBtn.textContent = isPreviewMode ? "편집 모드로 돌아가기" : "노트 미리보기";
+        canvasHeading.textContent = isPreviewMode ? "노트 미리보기 (A4 / LaTeX 렌더링)" : "페이지 캔버스 (블록 드래그 이동)";
+        renderInspector();
+        renderCanvas();
+    });
 
     document.getElementById("ai-placeholder-btn").addEventListener("click", () => {
         showMessage(msgEl, "AI 모델(YOLO/PaddleOCR/UniMERNet) 연동이 아직 보류 상태입니다. 모델이 준비되면 자동 분석 블록이 추가됩니다.");
@@ -400,11 +518,11 @@ if (currentPage === "editor") {
                 {
                     id: "block_2",
                     type: "math",
-                    content: "x = (-b ± √(b² - 4ac)) / 2a",
+                    content: "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}",
                     x: 0.1,
                     y: 0.24,
                     width: 0.65,
-                    height: 0.1,
+                    height: 0.12,
                     zIndex: 2,
                 },
             ],

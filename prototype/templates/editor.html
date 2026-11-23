@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>노트 편집 - Hand Font</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -31,8 +32,9 @@
 
             <div class="toolbar">
                 <button type="button" id="add-text-btn" class="btn btn-secondary">+ 텍스트 블록</button>
-                <button type="button" id="add-math-btn" class="btn btn-secondary">+ 수식 블록</button>
+                <button type="button" id="add-math-btn" class="btn btn-secondary">+ 수식 블록 (LaTeX)</button>
                 <button type="button" id="insert-sample-btn" class="btn btn-secondary">예시 블록 채우기</button>
+                <button type="button" id="toggle-preview-btn" class="btn btn-secondary">노트 미리보기</button>
                 <button type="button" id="ai-placeholder-btn" class="btn btn-secondary">AI 필기 분석 (준비 중)</button>
             </div>
             <p id="editor-message" class="message"></p>
@@ -40,7 +42,7 @@
 
         <section class="editor-workspace">
             <div class="card canvas-card">
-                <h2>페이지 캔버스 (블록 드래그 이동)</h2>
+                <h2 id="canvas-heading">페이지 캔버스 (블록 드래그 이동)</h2>
                 <div id="page-canvas" class="page-canvas"></div>
             </div>
 
@@ -52,12 +54,12 @@
                         블록 유형
                         <select id="prop-type">
                             <option value="text">text (텍스트)</option>
-                            <option value="math">math (수식)</option>
+                            <option value="math">math (LaTeX 수식)</option>
                             <option value="image">image (그림/필기)</option>
                         </select>
                     </label>
                     <label>
-                        내용
+                        내용 (수식은 LaTeX 입력)
                         <textarea id="prop-content" rows="3"></textarea>
                     </label>
                     <div class="grid-2">
@@ -95,6 +97,7 @@
         </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
     <script src="/static/script.js"></script>
 </body>
 </html>

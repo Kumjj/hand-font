@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hand Font</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
     <style>
         * { box-sizing: border-box; }
         body {
@@ -177,6 +178,10 @@
                               linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
             background-size: 10% 10%;
         }
+        .page-canvas.preview-mode {
+            background-image: none;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+        }
         .canvas-block {
             position: absolute;
             padding: 6px 8px;
@@ -186,12 +191,11 @@
             cursor: move;
             user-select: none;
             overflow: hidden;
-            font-size: 0.85rem;
+            font-size: 0.88rem;
         }
         .canvas-block.type-math {
             border-color: #c4b5fd;
             background-color: rgba(245, 243, 255, 0.92);
-            font-family: Consolas, Monaco, monospace;
         }
         .canvas-block.type-image {
             border-color: #86efac;
@@ -200,6 +204,15 @@
         .canvas-block.selected {
             border: 2px solid #2563eb;
             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+        .page-canvas.preview-mode .canvas-block {
+            border-color: transparent;
+            background-color: transparent;
+            cursor: default;
+            box-shadow: none;
+        }
+        .page-canvas.preview-mode .block-tag {
+            display: none;
         }
         .block-tag {
             font-size: 0.7rem;
@@ -242,8 +255,8 @@
             <h2>지원 기능</h2>
             <ul>
                 <li>회원가입 / 로그인 / 로그아웃 및 브라우저 세션 유지</li>
-                <li>초경량 블록 편집기 (상대 좌표 드래그 이동, 블록 추가/수정/삭제)</li>
-                <li>사용자 정의 필기 템플릿 저장, 불러오기, 이름 수정, 삭제</li>
+                <li>초경량 블록 편집기 (상대 좌표 드래그 이동, LaTeX 수식 렌더링, 노트 미리보기)</li>
+                <li>사용자 정의 필기 템플릿 저장, 미리보기 및 중간 수정, 불러오기, 삭제</li>
             </ul>
         </section>
     </main>
@@ -292,6 +305,32 @@
             <h2>사용자 정의 템플릿 목록</h2>
             <div id="templates-list" class="item-list"></div>
         </section>
+        <section class="card hidden" id="preview-panel">
+            <div class="editor-header">
+                <h2 id="preview-panel-title">미리보기</h2>
+                <button type="button" id="close-preview-btn" class="btn btn-secondary">닫기</button>
+            </div>
+            <div class="editor-workspace">
+                <div>
+                    <div id="preview-canvas" class="page-canvas preview-mode"></div>
+                </div>
+                <div id="template-edit-box" class="form-stack hidden">
+                    <label>
+                        템플릿 이름
+                        <input type="text" id="preview-tpl-name">
+                    </label>
+                    <label>
+                        템플릿 JSON (중간 수정)
+                        <textarea id="preview-tpl-json" rows="12"></textarea>
+                    </label>
+                    <div class="actions">
+                        <button type="button" id="preview-tpl-apply-btn" class="btn btn-secondary">미리보기 반영</button>
+                        <button type="button" id="preview-tpl-save-btn" class="btn btn-primary">템플릿 수정 저장</button>
+                    </div>
+                    <p id="preview-panel-msg" class="message"></p>
+                </div>
+            </div>
+        </section>
     </main>
 
     <main class="container hidden" id="view-editor">
@@ -307,8 +346,9 @@
             </div>
             <div class="toolbar">
                 <button type="button" id="add-text-btn" class="btn btn-secondary">+ 텍스트 블록</button>
-                <button type="button" id="add-math-btn" class="btn btn-secondary">+ 수식 블록</button>
+                <button type="button" id="add-math-btn" class="btn btn-secondary">+ 수식 블록 (LaTeX)</button>
                 <button type="button" id="insert-sample-btn" class="btn btn-secondary">예시 블록 채우기</button>
+                <button type="button" id="toggle-preview-btn" class="btn btn-secondary">노트 미리보기</button>
                 <button type="button" id="ai-placeholder-btn" class="btn btn-secondary">AI 필기 분석 (준비 중)</button>
             </div>
             <p id="editor-msg" class="message"></p>
@@ -316,7 +356,7 @@
 
         <section class="editor-workspace">
             <div class="card">
-                <h2>페이지 캔버스 (블록 드래그 이동)</h2>
+                <h2 id="canvas-heading">페이지 캔버스 (블록 드래그 이동)</h2>
                 <div id="page-canvas" class="page-canvas"></div>
             </div>
             <div class="card">
@@ -327,11 +367,11 @@
                         블록 유형
                         <select id="prop-type">
                             <option value="text">text (텍스트)</option>
-                            <option value="math">math (수식)</option>
+                            <option value="math">math (LaTeX 수식)</option>
                             <option value="image">image (그림/필기)</option>
                         </select>
                     </label>
-                    <label>내용 <textarea id="prop-content" rows="3"></textarea></label>
+                    <label>내용 (수식은 LaTeX 입력) <textarea id="prop-content" rows="3"></textarea></label>
                     <div class="grid-2">
                         <label>X (0~1) <input type="number" id="prop-x" step="0.01" min="0" max="1"></label>
                         <label>Y (0~1) <input type="number" id="prop-y" step="0.01" min="0" max="1"></label>
@@ -367,6 +407,7 @@
         </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
     <script>
         const STORAGE_USERS = "hf_users";
         const STORAGE_NOTES = "hf_notes";
@@ -374,8 +415,10 @@
         const STORAGE_SESSION = "hf_session";
 
         let currentNoteId = null;
+        let activeTemplateId = null;
         let docData = { title: "", subject: "", page: { width: 210, height: 297, unit: "mm" }, blocks: [] };
         let selectedBlockId = null;
+        let isPreviewMode = false;
 
         function readStore(key, fallback) {
             try {
@@ -420,6 +463,38 @@
             return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
         }
 
+        function renderBlockBody(bodyEl, block) {
+            const text = block.content || "";
+            if ((block.type || "text") === "math" && window.katex) {
+                try {
+                    window.katex.render(text, bodyEl, { throwOnError: false, displayMode: false });
+                    return;
+                } catch {
+                    bodyEl.textContent = text;
+                    return;
+                }
+            }
+            bodyEl.textContent = text;
+        }
+
+        function renderStaticCanvas(canvasEl, blocks) {
+            canvasEl.innerHTML = "";
+            const list = Array.isArray(blocks) ? blocks : [];
+            list.forEach((b) => {
+                const el = document.createElement("div");
+                el.className = `canvas-block type-${b.type || "text"}`;
+                el.style.left = `${(b.x ?? 0.1) * 100}%`;
+                el.style.top = `${(b.y ?? 0.1) * 100}%`;
+                el.style.width = `${(b.width ?? 0.4) * 100}%`;
+                el.style.height = `${(b.height ?? 0.08) * 100}%`;
+                el.style.zIndex = b.zIndex ?? 1;
+                const body = document.createElement("div");
+                renderBlockBody(body, b);
+                el.appendChild(body);
+                canvasEl.appendChild(el);
+            });
+        }
+
         function showView(viewId) {
             ["view-home", "view-login", "view-register", "view-notes", "view-editor"].forEach((id) => {
                 document.getElementById(id).classList.toggle("hidden", id !== viewId);
@@ -458,6 +533,8 @@
                 showView("view-login");
                 return;
             }
+            document.getElementById("preview-panel").classList.add("hidden");
+            activeTemplateId = null;
             showView("view-notes");
             renderNotesList();
             renderTemplatesList();
@@ -481,10 +558,19 @@
                         <div class="item-meta">과목: ${note.subject || "-"} | 수정: ${note.updated_at}</div>
                     </div>
                     <div class="actions">
+                        <button type="button" class="btn btn-secondary" data-preview="${note.id}">미리보기</button>
                         <button type="button" class="btn btn-primary" data-open="${note.id}">열기</button>
                         <button type="button" class="btn btn-danger" data-del="${note.id}">삭제</button>
                     </div>
                 `;
+                row.querySelector("[data-preview]").onclick = () => {
+                    activeTemplateId = null;
+                    document.getElementById("preview-panel-title").textContent = `노트 미리보기: ${note.title}`;
+                    document.getElementById("template-edit-box").classList.add("hidden");
+                    document.getElementById("preview-panel").classList.remove("hidden");
+                    renderStaticCanvas(document.getElementById("preview-canvas"), (note.content && note.content.blocks) || []);
+                    document.getElementById("preview-panel").scrollIntoView({ behavior: "smooth" });
+                };
                 row.querySelector("[data-open]").onclick = () => openEditor(note.id);
                 row.querySelector("[data-del]").onclick = () => {
                     const updated = readStore(STORAGE_NOTES, []).filter((n) => !(n.id === note.id && n.user_id === user.id));
@@ -514,23 +600,28 @@
                         <div class="item-meta">ID: ${tpl.id}</div>
                     </div>
                     <div class="actions">
-                        <button type="button" class="btn btn-secondary" data-rename="${tpl.id}">이름 수정</button>
+                        <button type="button" class="btn btn-secondary" data-edit="${tpl.id}">미리보기 / 수정</button>
                         <button type="button" class="btn btn-danger" data-del="${tpl.id}">삭제</button>
                     </div>
                 `;
-                row.querySelector("[data-rename]").onclick = () => {
-                    const nextName = prompt("새 템플릿 이름을 입력하세요:", tpl.name);
-                    if (!nextName || !nextName.trim()) return;
-                    const all = readStore(STORAGE_TEMPLATES, []).map((t) =>
-                        t.id === tpl.id && t.user_id === user.id ? { ...t, name: nextName.trim() } : t
-                    );
-                    writeStore(STORAGE_TEMPLATES, all);
-                    setMsg("notes-msg", "템플릿 이름이 수정되었습니다.");
-                    renderTemplatesList();
+                row.querySelector("[data-edit]").onclick = () => {
+                    activeTemplateId = tpl.id;
+                    document.getElementById("preview-panel-title").textContent = `템플릿 미리보기 / 수정: ${tpl.name}`;
+                    document.getElementById("preview-tpl-name").value = tpl.name;
+                    document.getElementById("preview-tpl-json").value = JSON.stringify(tpl.content, null, 2);
+                    setMsg("preview-panel-msg", "");
+                    document.getElementById("template-edit-box").classList.remove("hidden");
+                    document.getElementById("preview-panel").classList.remove("hidden");
+                    renderStaticCanvas(document.getElementById("preview-canvas"), (tpl.content && tpl.content.blocks) || []);
+                    document.getElementById("preview-panel").scrollIntoView({ behavior: "smooth" });
                 };
                 row.querySelector("[data-del]").onclick = () => {
                     const updated = readStore(STORAGE_TEMPLATES, []).filter((t) => !(t.id === tpl.id && t.user_id === user.id));
                     writeStore(STORAGE_TEMPLATES, updated);
+                    if (activeTemplateId === tpl.id) {
+                        document.getElementById("preview-panel").classList.add("hidden");
+                        activeTemplateId = null;
+                    }
                     setMsg("notes-msg", "템플릿이 삭제되었습니다.");
                     renderTemplatesList();
                 };
@@ -548,7 +639,7 @@
             const emptyEl = document.getElementById("block-inspector-empty");
             const inspEl = document.getElementById("block-inspector");
             const block = (docData.blocks || []).find((b) => b.id === selectedBlockId);
-            if (!block) {
+            if (!block || isPreviewMode) {
                 emptyEl.classList.remove("hidden");
                 inspEl.classList.add("hidden");
                 return;
@@ -566,11 +657,12 @@
 
         function renderCanvas() {
             const canvasEl = document.getElementById("page-canvas");
+            canvasEl.classList.toggle("preview-mode", isPreviewMode);
             canvasEl.innerHTML = "";
             const blocks = Array.isArray(docData.blocks) ? docData.blocks : [];
             blocks.forEach((b) => {
                 const el = document.createElement("div");
-                el.className = `canvas-block type-${b.type || "text"}${b.id === selectedBlockId ? " selected" : ""}`;
+                el.className = `canvas-block type-${b.type || "text"}${!isPreviewMode && b.id === selectedBlockId ? " selected" : ""}`;
                 el.style.left = `${(b.x ?? 0.1) * 100}%`;
                 el.style.top = `${(b.y ?? 0.1) * 100}%`;
                 el.style.width = `${(b.width ?? 0.4) * 100}%`;
@@ -582,42 +674,44 @@
                 tag.textContent = b.type || "text";
 
                 const body = document.createElement("div");
-                body.textContent = b.content || "";
+                renderBlockBody(body, b);
 
                 el.appendChild(tag);
                 el.appendChild(body);
 
-                el.addEventListener("mousedown", (e) => {
-                    e.preventDefault();
-                    selectedBlockId = b.id;
-                    renderInspector();
-                    const rect = canvasEl.getBoundingClientRect();
-                    const startX = e.clientX;
-                    const startY = e.clientY;
-                    const origX = b.x ?? 0.1;
-                    const origY = b.y ?? 0.1;
+                if (!isPreviewMode) {
+                    el.addEventListener("mousedown", (e) => {
+                        e.preventDefault();
+                        selectedBlockId = b.id;
+                        renderInspector();
+                        const rect = canvasEl.getBoundingClientRect();
+                        const startX = e.clientX;
+                        const startY = e.clientY;
+                        const origX = b.x ?? 0.1;
+                        const origY = b.y ?? 0.1;
 
-                    function onMove(ev) {
-                        const dx = (ev.clientX - startX) / rect.width;
-                        const dy = (ev.clientY - startY) / rect.height;
-                        b.x = Math.max(0, Math.min(1 - (b.width ?? 0.2), Number((origX + dx).toFixed(3))));
-                        b.y = Math.max(0, Math.min(1 - (b.height ?? 0.06), Number((origY + dy).toFixed(3))));
-                        el.style.left = `${b.x * 100}%`;
-                        el.style.top = `${b.y * 100}%`;
-                        document.getElementById("prop-x").value = b.x;
-                        document.getElementById("prop-y").value = b.y;
-                        syncJsonFromDoc();
-                    }
+                        function onMove(ev) {
+                            const dx = (ev.clientX - startX) / rect.width;
+                            const dy = (ev.clientY - startY) / rect.height;
+                            b.x = Math.max(0, Math.min(1 - (b.width ?? 0.2), Number((origX + dx).toFixed(3))));
+                            b.y = Math.max(0, Math.min(1 - (b.height ?? 0.06), Number((origY + dy).toFixed(3))));
+                            el.style.left = `${b.x * 100}%`;
+                            el.style.top = `${b.y * 100}%`;
+                            document.getElementById("prop-x").value = b.x;
+                            document.getElementById("prop-y").value = b.y;
+                            syncJsonFromDoc();
+                        }
 
-                    function onUp() {
-                        window.removeEventListener("mousemove", onMove);
-                        window.removeEventListener("mouseup", onUp);
-                        renderCanvas();
-                    }
+                        function onUp() {
+                            window.removeEventListener("mousemove", onMove);
+                            window.removeEventListener("mouseup", onUp);
+                            renderCanvas();
+                        }
 
-                    window.addEventListener("mousemove", onMove);
-                    window.addEventListener("mouseup", onUp);
-                });
+                        window.addEventListener("mousemove", onMove);
+                        window.addEventListener("mouseup", onUp);
+                    });
+                }
 
                 canvasEl.appendChild(el);
             });
@@ -650,6 +744,9 @@
             }
             currentNoteId = noteId;
             selectedBlockId = null;
+            isPreviewMode = false;
+            document.getElementById("toggle-preview-btn").textContent = "노트 미리보기";
+            document.getElementById("canvas-heading").textContent = "페이지 캔버스 (블록 드래그 이동)";
             document.getElementById("editor-title").value = note.title;
             document.getElementById("editor-subject").value = note.subject || "";
             docData = JSON.parse(JSON.stringify(note.content || { page: { width: 210, height: 297, unit: "mm" }, blocks: [] }));
@@ -677,15 +774,20 @@
         }
 
         function addNewBlock(type) {
+            if (isPreviewMode) {
+                isPreviewMode = false;
+                document.getElementById("toggle-preview-btn").textContent = "노트 미리보기";
+                document.getElementById("canvas-heading").textContent = "페이지 캔버스 (블록 드래그 이동)";
+            }
             if (!Array.isArray(docData.blocks)) docData.blocks = [];
             const newBlock = {
                 id: `block_${Date.now()}`,
                 type,
-                content: type === "math" ? "a^2 + b^2 = c^2" : "새 텍스트 블록",
+                content: type === "math" ? "\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}" : "새 텍스트 블록",
                 x: 0.1,
                 y: Math.min(0.85, 0.1 + docData.blocks.length * 0.1),
                 width: 0.5,
-                height: 0.09,
+                height: 0.1,
                 zIndex: docData.blocks.length + 1,
             };
             docData.blocks.push(newBlock);
@@ -701,6 +803,52 @@
         document.getElementById("back-notes-btn").onclick = openNotesView;
         document.getElementById("add-text-btn").onclick = () => addNewBlock("text");
         document.getElementById("add-math-btn").onclick = () => addNewBlock("math");
+
+        document.getElementById("toggle-preview-btn").onclick = () => {
+            isPreviewMode = !isPreviewMode;
+            document.getElementById("toggle-preview-btn").textContent = isPreviewMode ? "편집 모드로 돌아가기" : "노트 미리보기";
+            document.getElementById("canvas-heading").textContent = isPreviewMode ? "노트 미리보기 (A4 / LaTeX 렌더링)" : "페이지 캔버스 (블록 드래그 이동)";
+            renderInspector();
+            renderCanvas();
+        };
+
+        document.getElementById("close-preview-btn").onclick = () => {
+            document.getElementById("preview-panel").classList.add("hidden");
+            activeTemplateId = null;
+        };
+
+        document.getElementById("preview-tpl-apply-btn").onclick = () => {
+            try {
+                const parsed = JSON.parse(document.getElementById("preview-tpl-json").value);
+                renderStaticCanvas(document.getElementById("preview-canvas"), parsed.blocks || []);
+                setMsg("preview-panel-msg", "미리보기에 반영했습니다.");
+            } catch {
+                setMsg("preview-panel-msg", "유효한 JSON 형식이 아닙니다.", true);
+            }
+        };
+
+        document.getElementById("preview-tpl-save-btn").onclick = () => {
+            const user = getCurrentUser();
+            if (!activeTemplateId) return;
+            const name = document.getElementById("preview-tpl-name").value.trim();
+            if (!name) {
+                setMsg("preview-panel-msg", "템플릿 이름을 입력해주세요.", true);
+                return;
+            }
+            try {
+                const parsed = JSON.parse(document.getElementById("preview-tpl-json").value);
+                const all = readStore(STORAGE_TEMPLATES, []).map((t) =>
+                    t.id === activeTemplateId && t.user_id === user.id ? { ...t, name, content: parsed } : t
+                );
+                writeStore(STORAGE_TEMPLATES, all);
+                document.getElementById("preview-panel-title").textContent = `템플릿 미리보기 / 수정: ${name}`;
+                renderStaticCanvas(document.getElementById("preview-canvas"), parsed.blocks || []);
+                setMsg("preview-panel-msg", "템플릿이 수정 저장되었습니다.");
+                renderTemplatesList();
+            } catch {
+                setMsg("preview-panel-msg", "유효한 JSON 형식이 아닙니다.", true);
+            }
+        };
 
         document.getElementById("ai-placeholder-btn").onclick = () => {
             setMsg("editor-msg", "AI 모델(YOLO/PaddleOCR/UniMERNet) 연동이 아직 보류 상태입니다. 모델이 준비되면 자동 분석 블록이 추가됩니다.");
@@ -800,7 +948,7 @@
                 page: { width: 210, height: 297, unit: "mm" },
                 blocks: [
                     { id: "block_1", type: "text", content: "이차방정식의 근의 공식", x: 0.1, y: 0.12, width: 0.6, height: 0.08, zIndex: 1 },
-                    { id: "block_2", type: "math", content: "x = (-b ± √(b² - 4ac)) / 2a", x: 0.1, y: 0.24, width: 0.65, height: 0.1, zIndex: 2 },
+                    { id: "block_2", type: "math", content: "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}", x: 0.1, y: 0.24, width: 0.65, height: 0.12, zIndex: 2 },
                 ],
             };
             selectedBlockId = "block_1";
