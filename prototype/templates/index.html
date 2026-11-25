@@ -3,38 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HANd FONt</title>
+    <title>HanD Font</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header class="topbar">
-        <a href="/" class="brand">HANd FONt</a>
+        <a href="/" class="brand">HanD Font</a>
         <nav class="nav-links">
+            <a href="/" class="nav-item active">홈</a>
             {% if user %}
+                <a href="/notes" class="nav-item">내 노트</a>
                 <span class="user-badge">{{ user.username }}</span>
-                <a href="/notes">내 노트</a>
                 <button type="button" id="logout-btn" class="btn btn-secondary">로그아웃</button>
             {% else %}
-                <a href="/login">로그인</a>
+                <a href="/login" class="nav-item">로그인</a>
                 <a href="/register" class="btn btn-primary">시작하기</a>
             {% endif %}
         </nav>
     </header>
 
     <main class="container">
-        <section class="card hero-banner">
-            <h1>HANd FONt</h1>
-            <div class="actions">
-                {% if user %}
-                    <a href="/notes" class="btn btn-primary">내 노트 열기</a>
-                {% else %}
-                    <a href="/register" class="btn btn-primary">시작하기</a>
-                    <a href="/login" class="btn btn-secondary">로그인</a>
-                {% endif %}
+        <section class="card hero-split">
+            <div class="hero-left">
+                <h1 class="hero-title">HanD Font</h1>
+                <div class="actions">
+                    {% if user %}
+                        <a href="/notes" class="btn btn-primary">내 노트 열기</a>
+                    {% else %}
+                        <a href="/register" class="btn btn-primary">시작하기</a>
+                        <a href="/login" class="btn btn-secondary">로그인</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="hero-preview-paper">
+                <div class="paper-block text-sample" style="left: 10%; top: 12%; width: 78%;">이차방정식의 근의 공식</div>
+                <div class="paper-block math-sample" id="hero-katex-1" style="left: 10%; top: 28%; width: 80%;"></div>
+                <div class="paper-block text-sample" style="left: 10%; top: 52%; width: 72%;">판별식 D = b² - 4ac</div>
+                <div class="paper-block math-sample" id="hero-katex-2" style="left: 10%; top: 68%; width: 75%;"></div>
             </div>
         </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script>
+        if (window.katex) {
+            window.katex.render("x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}", document.getElementById("hero-katex-1"), { throwOnError: false });
+            window.katex.render("\\int_0^1 x^2 \\, dx = \\frac{1}{3}", document.getElementById("hero-katex-2"), { throwOnError: false });
+        }
+    </script>
     <script src="/static/script.js"></script>
 </body>
 </html>

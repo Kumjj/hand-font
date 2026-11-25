@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>내 노트 - HANd FONt</title>
+    <title>내 노트 - HanD Font</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header class="topbar">
-        <a href="/" class="brand">HANd FONt</a>
+        <a href="/" class="brand">HanD Font</a>
         <nav class="nav-links">
+            <a href="/" class="nav-item">홈</a>
+            <a href="/notes" class="nav-item active">내 노트</a>
             <span class="user-badge">{{ user.username }}</span>
-            <a href="/notes">내 노트</a>
             <button type="button" id="logout-btn" class="btn btn-secondary">로그아웃</button>
         </nav>
     </header>
