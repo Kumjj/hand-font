@@ -351,38 +351,79 @@
             }
         }
         .hero-title {
-            font-size: 2.3rem;
+            font-size: 2.5rem;
             letter-spacing: -0.03em;
-            margin-bottom: 22px;
+            margin-bottom: 10px;
             color: #0f172a;
+        }
+        .hero-sub {
+            color: #475569;
+            font-size: 1rem;
+            margin-top: 0;
+            margin-bottom: 24px;
         }
         .hero-preview-paper {
             position: relative;
             width: 100%;
-            height: 290px;
+            height: 330px;
             background-color: #ffffff;
             border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+            border-radius: 12px;
+            box-shadow: 0 14px 32px rgba(15, 23, 42, 0.1);
             background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px),
                               linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
-            background-size: 24px 24px;
+            background-size: 22px 22px;
             overflow: hidden;
+        }
+        .paper-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+        }
+        .paper-doc-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #334155;
+        }
+        .paper-tag {
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: #dbeafe;
+            color: #1d4ed8;
+            padding: 2px 8px;
+            border-radius: 999px;
         }
         .paper-block {
             position: absolute;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.92rem;
+            padding: 8px 11px;
+            border-radius: 7px;
+            font-size: 0.88rem;
         }
         .paper-block.text-sample {
             border: 1px solid #93c5fd;
-            background-color: rgba(239, 246, 255, 0.9);
+            background-color: rgba(239, 246, 255, 0.92);
             font-weight: 600;
         }
         .paper-block.math-sample {
             border: 1px solid #c4b5fd;
-            background-color: rgba(245, 243, 255, 0.92);
+            background-color: rgba(245, 243, 255, 0.94);
+        }
+        .paper-block.graph-sample {
+            border: 1px solid #86efac;
+            background-color: rgba(240, 253, 244, 0.92);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .paper-footer {
+            position: absolute;
+            right: 14px;
+            bottom: 10px;
+            font-size: 0.75rem;
+            color: #94a3b8;
         }
     </style>
 </head>
@@ -396,13 +437,26 @@
         <section class="card hero-split">
             <div class="hero-left">
                 <h1 class="hero-title">HanD Font</h1>
+                <p class="hero-sub">손글씨 필기를 블록형 디지털 노트로 정리하고 저장하는 웹 노트</p>
                 <div class="actions" id="home-actions"></div>
             </div>
             <div class="hero-preview-paper">
-                <div class="paper-block text-sample" style="left: 10%; top: 12%; width: 78%;">이차방정식의 근의 공식</div>
-                <div class="paper-block math-sample" id="hero-katex-1" style="left: 10%; top: 28%; width: 80%;"></div>
-                <div class="paper-block text-sample" style="left: 10%; top: 52%; width: 72%;">판별식 D = b² - 4ac</div>
-                <div class="paper-block math-sample" id="hero-katex-2" style="left: 10%; top: 68%; width: 75%;"></div>
+                <div class="paper-header">
+                    <span class="paper-doc-title">미적분과 방정식</span>
+                    <span class="paper-tag">수학</span>
+                </div>
+                <div class="paper-block text-sample" style="left: 7%; top: 18%; width: 54%;">01. 이차방정식의 근의 공식</div>
+                <div class="paper-block math-sample" id="hero-katex-1" style="left: 7%; top: 32%; width: 56%;"></div>
+                <div class="paper-block text-sample" style="left: 7%; top: 53%; width: 50%;">02. 정적분의 기본 정리</div>
+                <div class="paper-block math-sample" id="hero-katex-2" style="left: 7%; top: 67%; width: 54%;"></div>
+                <div class="paper-block graph-sample" style="left: 66%; top: 22%; width: 27%; height: 48%;">
+                    <svg viewBox="0 0 100 110" width="100%" height="100%">
+                        <line x1="10" y1="90" x2="92" y2="90" stroke="#94a3b8" stroke-width="2"/>
+                        <line x1="50" y1="10" x2="50" y2="98" stroke="#94a3b8" stroke-width="2"/>
+                        <path d="M 18 22 Q 50 130 82 22" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="paper-footer">y = x² · Block Note</div>
             </div>
         </section>
     </main>
