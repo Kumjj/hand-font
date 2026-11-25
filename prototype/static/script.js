@@ -119,19 +119,35 @@ if (currentPage === "notes") {
     let allNotes = [];
     let selectedCategory = "__ALL__";
 
+    function getNoteCategory(note) {
+        const cat = (note.subject || "").trim();
+        return cat || "기타";
+    }
+
     function getUniqueCategories(notes) {
         const set = new Set();
         notes.forEach((n) => {
-            const cat = (n.subject || "").trim();
-            if (cat) set.add(cat);
+            const cat = getNoteCategory(n);
+            if (cat !== "기타") set.add(cat);
         });
-        return Array.from(set).sort();
+        return ["기타", ...Array.from(set).sort()];
+    }
+
+    function showCategorySelect() {
+        customCatInput.classList.add("hidden");
+        customCatInput.value = "";
+        catSelectEl.classList.remove("hidden");
+    }
+
+    function showCategoryInput() {
+        catSelectEl.classList.add("hidden");
+        customCatInput.classList.remove("hidden");
+        customCatInput.focus();
     }
 
     function renderCategoryControls() {
         const categories = getUniqueCategories(allNotes);
-        const currentSelectVal = catSelectEl.value;
-        catSelectEl.innerHTML = "<option value=''>카테고리 없음 (미분류)</option>";
+        catSelectEl.innerHTML = "";
         categories.forEach((cat) => {
             const opt = document.createElement("option");
             opt.value = cat;
@@ -143,29 +159,21 @@ if (currentPage === "notes") {
         customOpt.textContent = "+ 새 카테고리 직접 입력";
         catSelectEl.appendChild(customOpt);
 
-        if (selectedCategory !== "__ALL__" && selectedCategory !== "__NONE__" && categories.includes(selectedCategory)) {
+        if (selectedCategory !== "__ALL__" && categories.includes(selectedCategory)) {
             catSelectEl.value = selectedCategory;
-            customCatInput.classList.add("hidden");
-        } else if (currentSelectVal === "__custom__") {
-            catSelectEl.value = "__custom__";
-            customCatInput.classList.remove("hidden");
         } else {
-            catSelectEl.value = "";
-            customCatInput.classList.add("hidden");
+            catSelectEl.value = "기타";
         }
+        showCategorySelect();
 
         categoryTabsEl.innerHTML = "";
         const tabs = [
             { key: "__ALL__", label: `전체 (${allNotes.length})` },
             ...categories.map((cat) => ({
                 key: cat,
-                label: `${cat} (${allNotes.filter((n) => (n.subject || "").trim() === cat).length})`,
+                label: `${cat} (${allNotes.filter((n) => getNoteCategory(n) === cat).length})`,
             })),
         ];
-        const uncategorizedCount = allNotes.filter((n) => !(n.subject || "").trim()).length;
-        if (uncategorizedCount > 0) {
-            tabs.push({ key: "__NONE__", label: `미분류 (${uncategorizedCount})` });
-        }
 
         tabs.forEach((tab) => {
             const btn = document.createElement("button");
@@ -183,10 +191,8 @@ if (currentPage === "notes") {
 
     function renderFilteredNotes() {
         const filtered = allNotes.filter((n) => {
-            const cat = (n.subject || "").trim();
             if (selectedCategory === "__ALL__") return true;
-            if (selectedCategory === "__NONE__") return !cat;
-            return cat === selectedCategory;
+            return getNoteCategory(n) === selectedCategory;
         });
 
         notesListEl.innerHTML = "";
@@ -200,7 +206,7 @@ if (currentPage === "notes") {
             row.innerHTML = `
                 <div>
                     <strong>${note.title}</strong>
-                    <div class="item-meta">카테고리: ${note.subject || "미분류"} | 수정: ${note.updated_at}</div>
+                    <div class="item-meta">카테고리: ${getNoteCategory(note)} | 수정: ${note.updated_at}</div>
                 </div>
                 <div class="actions">
                     <button type="button" class="btn btn-secondary" data-preview-note="${note.id}">미리보기</button>
@@ -214,11 +220,14 @@ if (currentPage === "notes") {
 
     catSelectEl.addEventListener("change", () => {
         if (catSelectEl.value === "__custom__") {
-            customCatInput.classList.remove("hidden");
-            customCatInput.focus();
-        } else {
-            customCatInput.classList.add("hidden");
-            customCatInput.value = "";
+            showCategoryInput();
+        }
+    });
+
+    customCatInput.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            catSelectEl.value = "기타";
+            showCategorySelect();
         }
     });
 
@@ -256,7 +265,7 @@ if (currentPage === "notes") {
     document.getElementById("create-note-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         const title = document.getElementById("new-note-title").value.trim();
-        const subject = catSelectEl.value === "__custom__" ? customCatInput.value.trim() : catSelectEl.value.trim();
+        const subject = (!customCatInput.classList.contains("hidden") ? customCatInput.value.trim() : catSelectEl.value.trim()) || "기타";
         try {
             const created = await requestJson("/api/notes", {
                 method: "POST",

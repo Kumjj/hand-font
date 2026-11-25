@@ -24,10 +24,10 @@
             <form id="create-note-form" class="inline-form">
                 <input type="text" id="new-note-title" placeholder="노트 제목" required>
                 <select id="new-note-category-select">
-                    <option value="">카테고리 없음 (미분류)</option>
+                    <option value="기타">기타</option>
                     <option value="__custom__">+ 새 카테고리 직접 입력</option>
                 </select>
-                <input type="text" id="new-note-subject" class="hidden" placeholder="새 카테고리 이름 입력">
+                <input type="text" id="new-note-subject" class="hidden" placeholder="새 카테고리 입력 (ESC: 목록)">
                 <button type="submit" class="btn btn-primary">새 노트 생성</button>
             </form>
             <p id="notes-message" class="message"></p>
