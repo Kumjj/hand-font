@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>내 노트 - HanD Font</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -34,7 +33,7 @@
         </section>
 
         <section class="card">
-            <h2>저장된 노트 목록 (카테고리별 탐색)</h2>
+            <h2>저장된 노트 목록</h2>
             <div id="category-tabs" class="category-tabs"></div>
             <div id="notes-list" class="item-list"></div>
         </section>
@@ -43,36 +42,8 @@
             <h2>사용자 정의 템플릿 목록</h2>
             <div id="templates-list" class="item-list"></div>
         </section>
-
-        <section class="card hidden" id="preview-panel">
-            <div class="editor-header">
-                <h2 id="preview-panel-title">미리보기</h2>
-                <button type="button" id="close-preview-btn" class="btn btn-secondary">닫기</button>
-            </div>
-            <div class="editor-workspace">
-                <div>
-                    <div id="preview-canvas" class="page-canvas preview-mode"></div>
-                </div>
-                <div id="template-edit-box" class="form-stack hidden">
-                    <label>
-                        템플릿 이름
-                        <input type="text" id="preview-tpl-name">
-                    </label>
-                    <label>
-                        템플릿 JSON (중간 수정)
-                        <textarea id="preview-tpl-json" rows="12"></textarea>
-                    </label>
-                    <div class="actions">
-                        <button type="button" id="preview-tpl-apply-btn" class="btn btn-secondary">미리보기 반영</button>
-                        <button type="button" id="preview-tpl-save-btn" class="btn btn-primary">템플릿 수정 저장</button>
-                    </div>
-                    <p id="preview-panel-msg" class="message"></p>
-                </div>
-            </div>
-        </section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
     <script src="/static/script.js"></script>
 </body>
 </html>
